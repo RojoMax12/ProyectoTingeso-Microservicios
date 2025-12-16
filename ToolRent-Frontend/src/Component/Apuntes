@@ -1,0 +1,1 @@
+Para subir el backend y el frontend, para empaquetar se hace npm run build y se crea  la carpeta dist, la cual tiene la version de produccion 
