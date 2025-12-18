@@ -18,24 +18,24 @@ spring:
           enabled: true
       routes:
         - id: Gestiondeclientes
-          uri: lb://Gestióndeclientes
+          uri: lb://Gestiondeclientes
           predicates:
             - Path=/api/Client/**
             - Path=/api/stateuser/**
         - id: GestiondekarymovMicroservices
-          uri: lb://GestióndekarymovMicroservices
+          uri: lb://GestiondekarymovMicroservices
           predicates:
             - Path=/api/kardex/**
         - id: GestiondemontytarMicroservices
-          uri: lb://GestióndemontytarMicroservices
+          uri: lb://GestiondemontytarMicroservices
           predicates:
             - Path=/api/AmountandRates/**
         - id: GestiondePrestyDevMicroservices
-          uri: lb://GestióndePréstyDevMicroservices
+          uri: lb://GestiondePréstyDevMicroservices
           predicates:
             - Path=/api/LoanTools/**
         - id: GestionInvdeHerrMicroservices
-          uri: lb://GestiónInvdeHerrMicroservices
+          uri: lb://GestionInvdeHerrMicroservices
           predicates:
             - Path=/api/Tools/**
             - Path=/api/statetools/**
