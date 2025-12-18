@@ -1,0 +1,22 @@
+package com.example.proyectotingeso.Entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Data
+@Table(name = "Roles")
+@NoArgsConstructor
+@AllArgsConstructor
+public class RoleEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(unique = true, nullable = false)
+    private Long id;
+
+    @Column(unique = true)
+    private String name;
+}

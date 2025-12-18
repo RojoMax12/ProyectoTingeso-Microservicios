@@ -1,0 +1,14 @@
+La capa de servicios, es la capa que implementa todas las capas de las reglas de negocio, debe interactuar a atreves
+de los repositorios, para interactuar con base de datos.
+
+@Services
+public class...{
+
+    @Autowired
+    nombreRepository nombredelavariable;
+
+  } se puede referenciar a los otros repositorios, en esta capa, calcular cosas o hacer cosas de logica de negocios,
+  se hace aqui.
+
+
+  Se hace una prueba unitaria por cada metodo, pero se le debe hacer multiples pruebas unitarias a metodos criticos

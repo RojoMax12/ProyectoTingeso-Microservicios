@@ -17,15 +17,30 @@ spring:
         locator:
           enabled: true
       routes:
-        - id: student-service
-          uri: lb://student-service
+        - id: Gestióndeclientes
+          uri: lb://Gestióndeclientes
           predicates:
-            - Path=/student/**
-        - id: book-service
-          uri: lb://book-service
+            - Path=/api/Client/**
+            - Path=/api/stateuser/**
+        - id: GestióndekarymovMicroservices
+          uri: lb://GestióndekarymovMicroservices
           predicates:
-            - Path=/book/**
-        - id: pet-service
-          uri: lb://pet-service
+            - Path=/api/kardex/**
+        - id: GestióndemontytarMicroservices
+          uri: lb://GestióndemontytarMicroservices
           predicates:
-            - Path=/pet/**
+            - Path=/api/AmountandRates/**
+        - id: GestióndePréstyDevMicroservices
+          uri: lb://pet-GestióndePréstyDevMicroservices
+          predicates:
+            - Path=/api/LoanTools/**
+        - id: GestiónInvdeHerrMicroservices
+          uri: lb://GestiónInvdeHerrMicroservices
+          predicates:
+            - Path=/api/Tools/**
+            - Path=/api/statetools/**
+        - id: ReportyconsMicroservices
+          uri: lb://ReportyconsMicroservices
+          predicates:
+            - Path=/api/report/**
+            - Path=/api/DataReport/**

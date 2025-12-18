@@ -1,0 +1,18 @@
+la capa de controladores, es un conjunto de clases que tienen metodos, clase que recibe peticiones http
+
+@RestController
+@RequestMapping("la ruta")
+@CrossOrigin("*")
+Public class nombre..{
+    @Autowired
+    nombreServices nombreservice...
+
+
+    @RequestBody viene como en un paque lo que le pasamos
+    @PathVariable viene solo con una variable
+
+    @GetMapping(ruta)
+    public ResponseEntity
+
+
+    Usar @PreAuthorize("hasAnyRole('USER')") según corresponda en cada endpoint. por el tema de keyclock

@@ -1,0 +1,29 @@
+Las entidades no son una capa todo debe ser en ingles
+
+
+@Entity
+@Table(name = "nombre")
+@Data define lombok
+@NoArgsConstructor
+@AllArgsConstructor
+public class EmployeeEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) se auto incrementa automaticamente
+    @Column(unique = true, nulleable = false) son unicos y no se aceptan valores nulos
+    private Long id;
+
+    atributos....
+}
+
+
+se debe hacer esto para cada una de las entidades
+
+@OneToMany
+
+@ManyToOne
+
+
+@OneToOne
+
+@ManyToMany

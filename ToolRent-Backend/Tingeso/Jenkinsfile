@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+    tools{
+        maven 'maven'
+    }
+    stages{
+
+        stage('Build JAR File'){
+            steps{
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/RojoMax12/ProyectoTingeso']])
+                dir("Tingeso"){
+                bat "mvn clean install"
+                }
+            }
+        }
+
+        stage("Unit Tests") {
+            steps {
+                // Run Maven 'test' phase. It compiles the test sources and runs the unit tests
+                dir("Tingeso"){
+                bat "mvn test" // Use 'bat' for Windows agents or 'sh' for Unix/Linux agents
+                }
+            }
+        }
+
+        stage("Build and Push Docker Image"){
+            steps{
+                dir("Tingeso"){
+                    script{
+                        withDockerRegistry(credentialsId: 'docker-credentials'){
+                            bat "docker build -t rojomax12/toolrent-backend ."
+                            bat "docker push rojomax12/toolrent-backend"
+                        }
+                    }
+                }
+            }
+        }
+
+
+    }
+}

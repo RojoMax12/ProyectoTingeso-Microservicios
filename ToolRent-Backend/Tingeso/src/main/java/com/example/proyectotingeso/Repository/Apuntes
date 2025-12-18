@@ -1,0 +1,14 @@
+La capa de repositorio (Persistencia) , para cada entidad que haya debe haber un repositorio, solo interaccion con la base de datos
+a traves de Query
+
+
+@Repository
+public interface "nombre del respositorio" extends JpaRepository<nombre de la entidad, Long> {
+
+  se puede hacer Query natural
+
+  @Query(value = "............ =:rut", nativeQuery = True)
+  EmployeeEntity findByRutNativeQuery(@Param("rut") String rut);
+
+
+}
