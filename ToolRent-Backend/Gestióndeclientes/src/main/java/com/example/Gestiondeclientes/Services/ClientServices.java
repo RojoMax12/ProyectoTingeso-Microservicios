@@ -1,9 +1,10 @@
 package com.example.Gestiondeclientes.Services;
 
+import com.example.Gestiondeclientes.Entity.ClientEntity;
 import com.example.Gestiondeclientes.Models.LoanTools;
 import com.example.Gestiondeclientes.Repository.ClientRepository;
 import com.example.Gestiondeclientes.Repository.StateUsersRepository;
-import com.example.proyectotingeso.Entity.ClientEntity;
+
 
 
 import org.springframework.beans.factory.annotation.Autowired;

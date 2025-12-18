@@ -1,7 +1,8 @@
 package com.example.Gestiondeclientes.Controllers;
 
+import com.example.Gestiondeclientes.Entity.ClientEntity;
 import com.example.Gestiondeclientes.Services.ClientServices;
-import com.example.proyectotingeso.Entity.ClientEntity;
+
 import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

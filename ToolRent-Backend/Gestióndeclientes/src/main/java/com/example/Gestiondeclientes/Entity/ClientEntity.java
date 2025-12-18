@@ -1,4 +1,4 @@
-package com.example.proyectotingeso.Entity;
+package com.example.Gestiondeclientes.Entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

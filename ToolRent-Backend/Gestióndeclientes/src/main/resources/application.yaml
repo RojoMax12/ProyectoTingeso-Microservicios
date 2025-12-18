@@ -6,7 +6,7 @@ spring:
       enabled: true
       uri: http://localhost:8081
   datasource:
-    url: jdbc:postgres://localhost:5432/Gestiondeclientes
+    url: jdbc:postgresql://localhost:5432/Gestiondeclientes
     username: postgres
     password: 1234
 

@@ -1,6 +1,7 @@
 package com.example.Gestiondeclientes.Repository;
 
-import com.example.proyectotingeso.Entity.ClientEntity;
+
+import com.example.Gestiondeclientes.Entity.ClientEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
