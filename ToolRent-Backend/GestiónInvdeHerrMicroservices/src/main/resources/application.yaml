@@ -6,9 +6,25 @@ spring:
       enabled: true
       uri: http://localhost:8081
   datasource:
-    url: jdbc:postgres://localhost:5432/Gestiondeclientes
+    url: jdbc:postgres://localhost:5432/GestionInvdeHerrMicroservices
     username: postgres
     password: 1234
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: sisgr-backend
+            client-secret: 2JfRT9VbAuqU0czxK5yCRcg1KeOCuqEK
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://localhost:8090/login/oauth2/code/keycloak"
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:9090/realms/sisgr-realm
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9090/realms/sisgr-realm
   jpa:
     hibernate:
       ddl-auto: update
