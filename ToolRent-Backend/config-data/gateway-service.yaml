@@ -31,7 +31,7 @@ spring:
           predicates:
             - Path=/api/AmountandRates/**
         - id: GestiondePrestyDevMicroservices
-          uri: lb://GestiondePréstyDevMicroservices
+          uri: lb://GestiondePrestyDevMicroservices
           predicates:
             - Path=/api/LoanTools/**
         - id: GestionInvdeHerrMicroservices
