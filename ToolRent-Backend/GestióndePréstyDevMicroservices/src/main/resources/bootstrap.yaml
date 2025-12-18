@@ -16,7 +16,7 @@ spring:
         registration:
           keycloak:
             client-id: sisgr-backend
-            client-secret: 2JfRT9VbAuqU0czxK5yCRcg1KeOCuqEK
+            client-secret: V8NoGAL7RPlrjfnN4KMv4c0sczK3BYKf
             scope: openid,profile,email
             authorization-grant-type: authorization_code
             redirect-uri: "http://localhost:8090/login/oauth2/code/keycloak"
