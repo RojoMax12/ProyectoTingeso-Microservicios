@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -76,19 +77,32 @@ public class ClientServices {
     }
 
     public List<ClientEntity> getAllClientLoanLate() {
-        List<LoanTools> loanToolsEntities = restTemplate.getForObject("http://GestiondePrestyDevMicroservices/api/LoanTools/late", List.class);
+        try {
+            // 1. Cambia List.class por LoanTools[].class
+            // Esto obliga a Jackson a mapear los campos correctamente
+            LoanTools[] loanToolsArray = restTemplate.getForObject(
+                    "http://GESTIONDEPRESTYDEVMICROSERVICES/api/LoanTools/late",
+                    LoanTools[].class);
 
-        if (loanToolsEntities.isEmpty()) {
-            return Collections.emptyList(); // Retorna inmediatamente si no hay préstamos atrasados
+            if (loanToolsArray == null || loanToolsArray.length == 0) {
+                return Collections.emptyList();
+            }
+
+            // 2. Convertir el Array a una lista de IDs de cliente
+            // Importante: Asegúrate de importar java.util.Arrays
+            List<Long> clientIds = Arrays.stream(loanToolsArray)
+                    .map(LoanTools::getClientid) // Ahora sí reconocerá el método
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            // 3. Buscar los clientes en tu base de datos local
+            return clientRepository.findAllById(clientIds);
+
+        } catch (Exception e) {
+            // Log para ver el error real en la consola de IntelliJ
+            System.err.println("Error en la comunicación con Préstamos: " + e.getMessage());
+            return Collections.emptyList();
         }
-
-        // Sacar los IDs de cliente
-        List<Long> clientIds = loanToolsEntities.stream()
-                .map(LoanTools::getClientid)
-                .collect(Collectors.toList());
-
-        // Solo se llama al repositorio si hay IDs para buscar
-        return clientRepository.findAllById(clientIds);
     }
 
 

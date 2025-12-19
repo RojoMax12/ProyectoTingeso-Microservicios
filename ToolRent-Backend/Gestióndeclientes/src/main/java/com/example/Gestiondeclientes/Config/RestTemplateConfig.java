@@ -17,8 +17,9 @@ public class RestTemplateConfig {
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.getInterceptors().add((request, body, execution) -> {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getPrincipal() instanceof Jwt) {
-                Jwt jwt = (Jwt) auth.getPrincipal();
+
+            // Verificamos que la autenticación sea de tipo Jwt
+            if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
                 request.getHeaders().setBearerAuth(jwt.getTokenValue());
             }
             return execution.execute(request, body);
