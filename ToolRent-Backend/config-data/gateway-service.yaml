@@ -20,8 +20,7 @@ spring:
         - id: Gestiondeclientes
           uri: lb://GESTIONDECLIENTES
           predicates:
-            - Path=/api/Client/**
-            - Path=/api/stateuser/**
+            - Path=/api/Client/**, /api/stateuser/**
         - id: GestiondekarymovMicroservices
           uri: lb://GestiondekarymovMicroservices
           predicates:
@@ -37,10 +36,8 @@ spring:
         - id: GestionInvdeHerrMicroservices
           uri: lb://GestionInvdeHerrMicroservices
           predicates:
-            - Path=/api/Tools/**
-            - Path=/api/statetools/**
+            - Path=/api/Tools/**, /api/statetools/**
         - id: ReportyconsMicroservices
           uri: lb://ReportyconsMicroservices
           predicates:
-            - Path=/api/report/**
-            - Path=/api/DataReport/**
+            - Path=/api/report/**, /api/DataReport/**
