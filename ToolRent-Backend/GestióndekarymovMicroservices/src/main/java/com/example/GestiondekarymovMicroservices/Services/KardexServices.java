@@ -2,6 +2,7 @@ package com.example.GestiondekarymovMicroservices.Services;
 
 
 import com.example.GestiondekarymovMicroservices.Entity.KardexEntity;
+import com.example.GestiondekarymovMicroservices.Models.Tool;
 import com.example.GestiondekarymovMicroservices.Repository.KardexRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class KardexServices {
     }
 
     public List<KardexEntity> HistoryKardexTool(String nameTool) {
-        List<ToolEntity> tools = ToolRepository.findAllByName(nameTool);
+        List<Tool> tools = ToolRepository.findAllByName(nameTool);
 
         if (tools == null || tools.isEmpty()) {
             throw new IllegalArgumentException("No existe la herramienta con nombre: " + nameTool);
@@ -51,7 +52,7 @@ public class KardexServices {
 
         List<KardexEntity> fullHistory = new ArrayList<>();
 
-        for (ToolEntity tool : tools) {
+        for (Tool tool : tools) {
             List<KardexEntity> kardex = kardexRepository.findAllByIdtool(tool.getId());
             fullHistory.addAll(kardex);
         }

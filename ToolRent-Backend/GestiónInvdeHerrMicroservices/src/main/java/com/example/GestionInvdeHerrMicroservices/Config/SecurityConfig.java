@@ -26,10 +26,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. PRIMERO CORS (más prioritario)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // 2. LUEGO CSRF
+                .cors(cors -> cors.disable())
                 .csrf(csrf -> csrf.disable())
 
                 // 3. CONFIGURACIÓN DE AUTORIZACIÓN
@@ -66,30 +63,4 @@ public class SecurityConfig {
         });
         return converter;
     }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:8070",
-                "http://192.168.4.178:8070",
-                "http://nginx-frontend:80",
-                "http://localhost:8090",
-                "http://127.0.0.1:8070",
-                "http://localhost:5173"
-
-        ));
-
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L); // 1 hora
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
 }
