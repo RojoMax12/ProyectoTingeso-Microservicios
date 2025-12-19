@@ -13,9 +13,9 @@ eureka:
 spring:
   cloud:
     gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
       globalcors:
-        default-filters:
-          - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
         cors-configurations:
           '[/**]':
             allowedOrigins: "http://localhost:5173"

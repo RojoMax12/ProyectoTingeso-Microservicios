@@ -1,4 +1,4 @@
-package com.example.proyectotingeso.Config;
+package com.example.GestiondePrestyDevMicroservices.Config;
 
 
 import org.springframework.context.annotation.Bean;
@@ -12,10 +12,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
 import java.util.*;
 
 @Configuration
@@ -27,7 +23,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 // 1. PRIMERO CORS (más prioritario)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.disable())
 
                 // 2. LUEGO CSRF
                 .csrf(csrf -> csrf.disable())
@@ -66,30 +62,4 @@ public class SecurityConfig {
         });
         return converter;
     }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:8070",
-                "http://192.168.4.178:8070",
-                "http://nginx-frontend:80",
-                "http://localhost:8090",
-                "http://127.0.0.1:8070",
-                "http://localhost:8080"
-
-        ));
-
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L); // 1 hora
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
 }
