@@ -76,7 +76,7 @@ public class ClientServices {
     }
 
     public List<ClientEntity> getAllClientLoanLate() {
-        List<LoanTools> loanToolsEntities = restTemplate.getForObject("http://GestióndePréstyDevMicroservices/api/LoanTools/late", List.class);
+        List<LoanTools> loanToolsEntities = restTemplate.getForObject("http://GestiondePrestyDevMicroservices/api/LoanTools/late", List.class);
 
         if (loanToolsEntities.isEmpty()) {
             return Collections.emptyList(); // Retorna inmediatamente si no hay préstamos atrasados

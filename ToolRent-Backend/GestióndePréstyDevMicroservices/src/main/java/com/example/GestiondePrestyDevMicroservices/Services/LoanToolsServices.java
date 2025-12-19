@@ -66,15 +66,15 @@ public class LoanToolsServices {
             ));
         }
 
-        Client client = restTemplate.getForObject("http://Gestióndeclientes/api/Client/" + loanToolsEntity.getClientid(), Client.class);
+        Client client = restTemplate.getForObject("http://Gestiondeclientes/api/Client/" + loanToolsEntity.getClientid(), Client.class);
 
-        StateUsers restrictedState = restTemplate.getForObject("http://Gestióndeclientes/api/stateuser/name/" + "Restricted", StateUsers.class);
+        StateUsers restrictedState = restTemplate.getForObject("http://Gestiondeclientes/api/stateuser/name/" + "Restricted", StateUsers.class);
         if (client.getState().equals(restrictedState.getId())) {
             throw new IllegalStateException("Cliente en estado restringido");
         }
 
 
-        Tool currentTool = restTemplate.getForObject("http://GestiónInvdeHerrMicroservices/api/Tool/tool/" + loanToolsEntity.getToolid(), Tool.class );
+        Tool currentTool = restTemplate.getForObject("http://GestionInvdeHerrMicroservices/api/Tool/tool/" + loanToolsEntity.getToolid(), Tool.class );
 
         // Obtener todos los préstamos del cliente
         List<LoanToolsEntity> clientLoans = loanToolsRepository.findAllByClientidAndStatus(loanToolsEntity.getClientid(), "Active");
@@ -85,7 +85,7 @@ public class LoanToolsServices {
                     try {
                         // Hacemos la petición al microservicio de Inventario (M1) usando el ID del préstamo
                         return restTemplate.getForObject(
-                                "http://GestiónInvdeHerrMicroservices/api/Tools/tool/" + loan.getToolid(),
+                                "http://GestionInvdeHerrMicroservices/api/Tools/tool/" + loan.getToolid(),
                                 Tool.class
                         );
                     } catch (Exception e) {
@@ -122,13 +122,13 @@ public class LoanToolsServices {
 
         // 5. Validar herramienta
         System.out.println("Buscando herramienta con ID: " + loanToolsEntity.getToolid());
-        Tool herramienta = restTemplate.getForObject("http://GestiónInvdeHerrMicroservices/api/Tools/name/tool/" + loanToolsEntity.getToolid(), Tool.class );
+        Tool herramienta = restTemplate.getForObject("http://GestionInvdeHerrMicroservices/api/Tools/name/tool/" + loanToolsEntity.getToolid(), Tool.class );
 
         System.out.println("Herramienta encontrada: " + herramienta);
 
         // 6. Validar estados
         System.out.println("Obteniendo estados de herramientas");
-        StateTools[] statetools = restTemplate.getForObject("http://GestiónInvdeHerrMicroservices/api/statetools/", StateTools[].class);
+        StateTools[] statetools = restTemplate.getForObject("http://GestionInvdeHerrMicroservices/api/statetools/", StateTools[].class);
         List<StateTools> estados = Arrays.asList(statetools);
 
 
@@ -150,7 +150,7 @@ public class LoanToolsServices {
 
             Long estadoPrestado = estados.get(1).getId();
             herramienta.setStates(estadoPrestado);
-            restTemplate.put("http://GestiónInvdeHerrMicroservices/api/tools/UpdateTool", herramienta);
+            restTemplate.put("http://GestionInvdeHerrMicroservices/api/tools/UpdateTool", herramienta);
             System.out.println("Estado de herramienta actualizado correctamente");
 
             // 9. Guardar el préstamo
@@ -178,7 +178,7 @@ public class LoanToolsServices {
 
 
 
-            restTemplate.put("http://GestiónInvdeHerrMicroservices/api/tools/UpdateTool", herramienta);
+            restTemplate.put("http://GestionInvdeHerrMicroservices/api/tools/UpdateTool", herramienta);
 
 
             throw new RuntimeException("Error al crear el préstamo: " + e.getMessage());
@@ -239,7 +239,7 @@ public class LoanToolsServices {
         if (lateFee > 0) {
             Client client = restTemplate.getForObject("http://Gestiondeclientes/api/Client/" + loantool.getClientid(), Client.class);
 
-            StateUsers restrictedState = restTemplate.getForObject("http://Gestióndeclientes/api/stateuser/name/" + "Restricted", StateUsers.class);
+            StateUsers restrictedState = restTemplate.getForObject("http://Gestiondeclientes/api/stateuser/name/" + "Restricted", StateUsers.class);
             if (restrictedState == null) {
                 throw new IllegalStateException("Estado 'Restricted' no encontrado.");
             }
@@ -291,17 +291,17 @@ public class LoanToolsServices {
     //Se cambia el estado de la herramienta actual a que esta disponble, falta actualizar en el kardex
     public LoanToolsEntity returnLoanTools(Long userid, Long toolid) {
         // Buscar herramienta
-        Tool tool = restTemplate.getForObject("http://GestiónInvdeHerrMicroservices/api/Tools/name/tool/" + toolid, Tool.class );
+        Tool tool = restTemplate.getForObject("http://GestionInvdeHerrMicroservices/api/Tools/name/tool/" + toolid, Tool.class );
 
         // Buscar préstamo asociado
         var loan = loanToolsRepository.findByClientidAndToolid(userid, toolid)
                 .orElseThrow(() -> new IllegalArgumentException("No existe un préstamo para este usuario y herramienta"));
 
         // Cambiar estado de la herramienta a "Disponible" (por ejemplo el primero en la lista)
-        StateTools[] statetools = restTemplate.getForObject("http://GestiónInvdeHerrMicroservices/api/statetools/", StateTools[].class);
+        StateTools[] statetools = restTemplate.getForObject("http://GestionInvdeHerrMicroservices/api/statetools/", StateTools[].class);
 
         tool.setStates(statetools[0].getId()); // disponible
-        restTemplate.put("http://GestiónInvdeHerrMicroservices/api/Tools/UpdateTool", tool);
+        restTemplate.put("http://GestionInvdeHerrMicroservices/api/Tools/UpdateTool", tool);
 
        checkAndUpdateClientStatus(loan.getClientid());
        loan.setStatus("No active");
@@ -312,14 +312,14 @@ public class LoanToolsServices {
     public boolean checkAndUpdateClientStatus(Long clientId) {
         System.out.println("[TRACE] Iniciando checkAndUpdateClientStatus para clientId: " + clientId);
 
-        Client client = restTemplate.getForObject("http://Gestióndeclientes/api/Client/" + clientId, Client.class);
+        Client client = restTemplate.getForObject("http://Gestiondeclientes/api/Client/" + clientId, Client.class);
 
 
         System.out.println("[TRACE] Cliente encontrado: " + client.getId() + ", estado actual: " + client.getState());
 
         // Obtener estados
-        Long restricted = restTemplate.getForObject("http://Gestióndeclientes/api/stateuser/name/" + "Restricted", StateUsers.class).getId();
-        Long active = restTemplate.getForObject("http://Gestióndeclientes/api/stateuser/name/" + "Active", StateUsers.class).getId();
+        Long restricted = restTemplate.getForObject("http://Gestiondeclientes/api/stateuser/name/" + "Restricted", StateUsers.class).getId();
+        Long active = restTemplate.getForObject("http://Gestiondeclientes/api/stateuser/name/" + "Active", StateUsers.class).getId();
 
         // Verificar si el cliente está actualmente restringido
         if (!client.getState().equals(restricted)) {
@@ -377,9 +377,9 @@ public class LoanToolsServices {
         LoanToolsEntity loan = loanToolsRepository.findById(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found: " + loanId));
 
-        Tool tool = restTemplate.getForObject("http://GestiónInvdeHerrMicroservices/api/Tool/tool/" + loan.getToolid(), Tool.class );
+        Tool tool = restTemplate.getForObject("http://GestionInvdeHerrMicroservices/api/Tool/tool/" + loan.getToolid(), Tool.class );
 
-        Amountsandrates rates = restTemplate.getForObject("http://GestióndemontytarMicroservices/api/AmountandRates/" + 1L, Amountsandrates.class);
+        Amountsandrates rates = restTemplate.getForObject("http://GestiondemontytarMicroservices/api/AmountandRates/" + 1L, Amountsandrates.class);
 
 
         System.out.println(tool.getId());

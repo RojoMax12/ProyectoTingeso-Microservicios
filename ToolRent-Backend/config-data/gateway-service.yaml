@@ -1,6 +1,6 @@
 server:
   port: 8090
-  
+
 eureka:
   client:
     fetch-registry: true
@@ -22,22 +22,22 @@ spring:
           predicates:
             - Path=/api/Client/**, /api/stateuser/**
         - id: GestiondekarymovMicroservices
-          uri: lb://GestiondekarymovMicroservices
+          uri: lb://GESTIONDEKARYMOVMICROSERVICES
           predicates:
             - Path=/api/kardex/**
         - id: GestiondemontytarMicroservices
-          uri: lb://GestiondemontytarMicroservices
+          uri: lb://GESTIONDEMONTYTARMICROSERVICES
           predicates:
             - Path=/api/AmountandRates/**
         - id: GestiondePrestyDevMicroservices
-          uri: lb://GestiondePrestyDevMicroservices
+          uri: lb://GESTIONDEPRESTYDEVMICROSERVICES
           predicates:
             - Path=/api/LoanTools/**
         - id: GestionInvdeHerrMicroservices
-          uri: lb://GestionInvdeHerrMicroservices
+          uri: lb://GESTIONINVDEHERRMICROSERVICES
           predicates:
             - Path=/api/Tools/**, /api/statetools/**
         - id: ReportyconsMicroservices
-          uri: lb://ReportyconsMicroservices
+          uri: lb://REPORTYCONSMICROSERVICES
           predicates:
             - Path=/api/report/**, /api/DataReport/**
