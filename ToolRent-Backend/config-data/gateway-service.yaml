@@ -19,7 +19,6 @@ spring:
         cors-configurations:
           '[/**]':
             allowedOrigins: 
-            - "*"
             - "http://frontend-service:30000"
             - "http://localhost:5173"
             allowedMethods:
