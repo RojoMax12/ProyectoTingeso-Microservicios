@@ -1,8 +1,10 @@
 package com.example.ReportyconsMicroservices.Controllers;
 
 
-import com.example.proyectotingeso.Entity.ReportEntity;
-import com.example.proyectotingeso.Services.ReportServices;
+
+
+import com.example.ReportyconsMicroservices.Entity.ReportEntity;
+import com.example.ReportyconsMicroservices.Services.ReportServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

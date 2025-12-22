@@ -8,6 +8,7 @@ import com.example.GestionInvdeHerrMicroservices.Repository.ToolRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +22,7 @@ public class ToolServices {
     StateToolsRepository stateToolsRepository;
 
 
-    public ToolEntity save(ToolEntity toolEntity) {
+    public ToolEntity save(ToolEntity toolEntity)   {
 
         // 1. VALIDACIONES INICIALES BÁSICAS (solo si la data es claramente inválida)
         if (toolEntity.getName() == null || toolEntity.getName().trim().isEmpty()) {
@@ -140,8 +141,6 @@ public class ToolServices {
         return toolRepository.save(tool);
     }
 
-
-
     public ToolEntity borrowedTool(Long idTool) throws Exception {
         // Verificar si la herramienta existe
         ToolEntity tool = toolRepository.findById(idTool)
@@ -175,7 +174,7 @@ public class ToolServices {
 
     public ToolEntity updateTool(ToolEntity toolEntity) {
         ToolEntity tool = toolRepository.findById(toolEntity.getId()).get();
-        ToolEntity newtool = new ToolEntity(tool.getId(), toolEntity.getName(), toolEntity.getCategory(), toolEntity.getReplacement_cost(), tool.getStates());
+        ToolEntity newtool = new ToolEntity(tool.getId(), toolEntity.getName(), toolEntity.getCategory(), toolEntity.getReplacement_cost(), toolEntity.getStates());
         return toolRepository.save(newtool);
     }
 
@@ -195,5 +194,34 @@ public class ToolServices {
         catch(Exception e) {
             throw new Exception(e.getMessage());
         }
+    }
+
+    public List<ToolEntity> findAlltoolByname(String name) throws Exception {
+        try{
+            List<ToolEntity> tools = toolRepository.findAllByName(name);
+            return tools;
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    public List<ToolEntity> saveMultiple(ToolEntity toolTemplate, int quantity) {
+        List<ToolEntity> toolList = new ArrayList<>();
+
+        for (int i = 0; i <= quantity; i++) {
+            // Creamos una nueva instancia basada en la plantilla
+            ToolEntity newTool = new ToolEntity();
+            newTool.setName(toolTemplate.getName());
+            newTool.setCategory(toolTemplate.getCategory());
+            newTool.setReplacement_cost(toolTemplate.getReplacement_cost());
+            newTool.setStates(toolTemplate.getStates());
+
+            // El ID debe ser null para que JPA genere uno nuevo por cada registro
+            newTool.setId(null);
+
+            toolList.add(toolRepository.save(newTool));
+        }
+
+        return toolList;
     }
 }

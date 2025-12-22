@@ -32,6 +32,10 @@ const repairtool = (idtool) => {
     return httpClient.put(`/api/Tools/inrepair/${idtool}`);
 }
 
+const createmultiple = (data, number) => {
+    return httpClient.post(`/api/Tools/add-multiple/${number}`, data)
+}
 
 
-export default {getAll, create, getid, update, deleteid, getinventory, unsuscribeTools, repairtool}
+
+export default {getAll, create, getid, update, deleteid, getinventory, unsuscribeTools, repairtool, createmultiple}

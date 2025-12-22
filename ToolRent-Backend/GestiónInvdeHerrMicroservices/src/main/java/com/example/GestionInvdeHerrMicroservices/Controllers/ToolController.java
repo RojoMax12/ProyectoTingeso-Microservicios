@@ -27,6 +27,12 @@ public class ToolController {
         return ResponseEntity.ok(newToolsEntity);
     }
 
+    @PostMapping("/add-multiple/{quantity}")
+    public ResponseEntity<List<ToolEntity>> addMultipleTools(@RequestBody ToolEntity toolEntity, @PathVariable int  quantity) {
+        List<ToolEntity> savedTools = toolServices.saveMultiple(toolEntity, quantity);
+        return ResponseEntity.ok(savedTools);
+    }
+
     @PreAuthorize(("hasAnyRole('USER','ADMIN')"))
     @GetMapping("/alltools")
     public ResponseEntity<List<ToolEntity>> getAlltools() {
@@ -82,5 +88,12 @@ public class ToolController {
     public ResponseEntity<ToolEntity> inrepairTool(@PathVariable Long idtool) throws Exception{
         ToolEntity tool = toolServices.inrepair(idtool);
         return ResponseEntity.ok(tool);
+    }
+
+    @PreAuthorize(("hasAnyRole('USER','ADMIN')"))
+    @GetMapping("/Allbyname/{name}")
+    public ResponseEntity<List<ToolEntity>> getAllbyname(@PathVariable String name) throws Exception {
+        List<ToolEntity> tools = toolServices.findAlltoolByname(name);
+        return ResponseEntity.ok(tools);
     }
 }

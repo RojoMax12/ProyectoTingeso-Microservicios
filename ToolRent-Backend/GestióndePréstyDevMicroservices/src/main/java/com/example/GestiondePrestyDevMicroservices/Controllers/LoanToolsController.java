@@ -110,5 +110,19 @@ public class LoanToolsController {
         }
     }
 
+    @PreAuthorize(("hasAnyRole('USER','ADMIN')"))
+    @GetMapping("/Allloantoolstatusandrentalfee")
+    public ResponseEntity<List<LoanToolsEntity>> getAllLoanTools(){
+        List<LoanToolsEntity> loanstools = loanToolsServices.findallloanstoolstatusandRentalFee();
+        return ResponseEntity.ok(loanstools);
+    }
+
+    @PreAuthorize(("hasAnyRole('USER','ADMIN')"))
+    @GetMapping("/late")
+    public ResponseEntity<List<LoanToolsEntity>> getAllLoanToolslate(){
+        List<LoanToolsEntity> loanstools = loanToolsServices.findallloanstoolstatusLate();
+        return ResponseEntity.ok(loanstools);
+    }
+
 
 }

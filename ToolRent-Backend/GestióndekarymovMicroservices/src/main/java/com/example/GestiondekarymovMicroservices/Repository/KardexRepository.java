@@ -19,19 +19,15 @@ public interface KardexRepository extends JpaRepository<KardexEntity, Long> {
 
     public List<KardexEntity> findByDateBetweenOrderByDateDesc(LocalDate init, LocalDate fin);
 
-    @Query("""
-        SELECT 
-               t.id AS idTool,
-               t.name AS name,
-               COUNT(k) AS totalPrestamos
-        FROM KardexEntity k
-        JOIN ToolEntity t ON t.id = k.idtool
-        WHERE k.StateToolsId = 2
-        GROUP BY t.id, t.name
-        ORDER BY totalPrestamos DESC
-        LIMIT 5
-    """)
-    List<Object[]> getTopTools();
+    @Query(value = """
+    SELECT k.idtool, COUNT(*) as total 
+    FROM kardex k 
+    WHERE k.state_tools_id = 2 
+    GROUP BY k.idtool 
+    ORDER BY total DESC 
+    LIMIT 5
+        """, nativeQuery = true)
+    List<Object[]> getTopToolIdsAndCounts();
 
 
 

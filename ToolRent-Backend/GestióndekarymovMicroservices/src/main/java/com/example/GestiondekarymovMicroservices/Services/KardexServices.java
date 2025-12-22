@@ -11,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class KardexServices {
@@ -44,7 +45,7 @@ public class KardexServices {
     }
 
     public List<KardexEntity> HistoryKardexTool(String nameTool) {
-        List<Tool> tools = ToolRepository.findAllByName(nameTool);
+        List<Tool> tools = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/Tools/Allbyname/" + nameTool, List.class);
 
         if (tools == null || tools.isEmpty()) {
             throw new IllegalArgumentException("No existe la herramienta con nombre: " + nameTool);
@@ -60,10 +61,30 @@ public class KardexServices {
         return fullHistory;
     }
 
+
+
     public List<Object[]> TopToolKardexTool() {
-        List<Object[]> toptool = kardexRepository.getTopTools();
-        return toptool;
+        // 1. Obtenemos los IDs y conteos desde la base de datos de este microservicio
+        List<Object[]> results = kardexRepository.getTopToolIdsAndCounts();
+
+        return results.stream().map(result -> {
+            Long toolId = ((Number) result[0]).longValue();
+            Long total = ((Number) result[1]).longValue();
+
+            // 2. Llamada al microservicio de Tools para obtener los detalles
+            // Nota: Asegúrate de tener configurado RestTemplate o usar Feign
+            Tool toolData = restTemplate.getForObject(
+                    "http://GESTIONINVDEHERRMICROSERVICES/api/Tools/tool/" + toolId,
+                    Tool.class
+            );
+
+            // 3. Empaquetamos en un Object[] para respetar el tipo de retorno solicitado
+            // Índice 0: El objeto Tool completo, Índice 1: El total de préstamos
+            return new Object[] { toolData, total };
+
+        }).collect(Collectors.toList());
     }
+
 
     public List<KardexEntity> HistoryKardexDateInitandDateFin(LocalDate init, LocalDate fin) {
         return kardexRepository.findByDateBetweenOrderByDateDesc(init, fin);

@@ -28,6 +28,8 @@ const AddTools = () => {
         states: 1
     });
 
+    const [quantity, setQuantity] = useState("");
+
     const { keycloak } = useKeycloak();
     const isAdmin = keycloak?.tokenParsed?.realm_access?.roles?.includes("ADMIN") || false;
 
@@ -65,102 +67,41 @@ const AddTools = () => {
 
     // Función para autocompletar cuando cambia nombre o categoría
     useEffect(() => {
-        console.log("🔍 === INICIANDO VERIFICACIÓN DE AUTOCOMPLETADO ===");
-        console.log("📝 Estado actual del formulario:", toolData);
-        console.log("📚 Herramientas disponibles:", existingTools.length);
-        
-        // Mostrar todas las herramientas disponibles para debugging
-        if (debugMode && existingTools.length > 0) {
-            console.log("🗂️ Lista completa de herramientas:");
-            existingTools.forEach((tool, index) => {
-                console.log(`   ${index + 1}. Nombre: "${tool.name}" | Categoría: "${tool.category}" | Costo: ${tool.replacement_cost}`);
-            });
-        }
+    if (toolData.name && toolData.category && existingTools.length > 0) {
+        const matchingTool = existingTools.find(tool => 
+            tool.name?.toLowerCase().trim() === toolData.name.toLowerCase().trim() &&
+            tool.category?.toLowerCase().trim() === toolData.category.toLowerCase().trim()
+        );
 
-        if (toolData.name && toolData.category && existingTools.length > 0) {
-            console.log(`🔎 Buscando coincidencias para: "${toolData.name}" + "${toolData.category}"`);
-            
-            // Buscar herramientas con el mismo nombre y categoría
-            const matchingTools = existingTools.filter(tool => {
-                const nameMatch = tool.name && 
-                    tool.name.toLowerCase().trim() === toolData.name.toLowerCase().trim();
-                const categoryMatch = tool.category && 
-                    tool.category.toLowerCase().trim() === toolData.category.toLowerCase().trim();
-                
-                console.log(`   🔍 Comparando con "${tool.name}" + "${tool.category}":`, {
-                    nameMatch,
-                    categoryMatch,
-                    bothMatch: nameMatch && categoryMatch
-                });
-                
-                return nameMatch && categoryMatch;
+        if (matchingTool) {
+            setAutoCompleteInfo({
+                found: true,
+                count: existingTools.filter(t => t.name === matchingTool.name).length,
+                reference: matchingTool
             });
 
-            console.log("🎯 Herramientas coincidentes encontradas:", matchingTools.length);
-            
-            if (matchingTools.length > 0) {
-                const referenceTool = matchingTools[0];
-                console.log("💡 Herramienta de referencia seleccionada:", referenceTool);
-                
-                setAutoCompleteInfo({
-                    found: true,
-                    count: matchingTools.length,
-                    reference: referenceTool
-                });
-
-                // Autocompletar el costo de reemplazo si está vacío
-                if (!toolData.replacement_cost && referenceTool.replacement_cost) {
-                    console.log("🔄 Autocompletando costo de", referenceTool.replacement_cost);
-                    setToolData(prev => ({
-                        ...prev,
-                        replacement_cost: referenceTool.replacement_cost.toString()
-                    }));
-                } else {
-                    console.log("⚠️ NO autocompletando porque:", {
-                        yaHayCosto: !!toolData.replacement_cost,
-                        costoDeReferencia: referenceTool.replacement_cost
-                    });
-                }
-            } else {
-                console.log("❌ No se encontraron herramientas coincidentes");
-                setAutoCompleteInfo(null);
+            // Solo actualizar si el campo está vacío para no sobrescribir cambios manuales
+            if (!toolData.replacement_cost && matchingTool.replacement_cost) {
+                setToolData(prev => ({
+                    ...prev,
+                    replacement_cost: matchingTool.replacement_cost.toString()
+                }));
             }
         } else {
-            console.log("⏸️ Condiciones no cumplidas para autocompletado:", {
-                tieneNombre: !!toolData.name,
-                tieneCategoria: !!toolData.category,
-                hayHerramientas: existingTools.length > 0
-            });
             setAutoCompleteInfo(null);
         }
-        
-        console.log("🔍 === FIN VERIFICACIÓN DE AUTOCOMPLETADO ===");
-    }, [toolData.name, toolData.category, existingTools, debugMode]);
+    }
+    }  , [toolData.name, toolData.category, existingTools]); // Quitamos toolData completo para evitar bucles 
 
     const handleInputChange = (field, value) => {
-        console.log(`📝 Cambiando campo "${field}" a:`, value);
-        
-        // Si estamos cambiando el nombre o categoría, limpiar el costo para permitir autocompletado
-        if ((field === 'name' || field === 'category') && value !== '') {
-            setToolData(prev => ({
-                ...prev,
-                [field]: value,
-                // Limpiar costo solo si estamos cambiando nombre/categoría para forzar autocompletado
-                ...(field === 'name' || field === 'category' ? { replacement_cost: '' } : {})
-            }));
-        } else {
-            setToolData(prev => ({
-                ...prev,
-                [field]: value
-            }));
-        }
+    setToolData(prev => ({
+        ...prev,
+        [field]: value
+    }));
     };
 
     const handleSubmit = () => {
-        if (!toolData.name || !toolData.category || !toolData.replacement_cost) {
-            alert("Por favor completa todos los campos requeridos.");
-            return;
-        }
+        const numQuantity = parseInt(quantity) || 1; // Si está vacío, por defecto 1
 
         const newTool = {
             name: toolData.name,
@@ -169,30 +110,15 @@ const AddTools = () => {
             states: 1
         };
 
-        console.log("📤 Enviando nueva herramienta:", newTool);
-
-        ToolServices.create(newTool)
+        // Usamos numQuantity para asegurar que sea un entero
+        ToolServices.createmultiple(newTool, numQuantity)
             .then(() => {
-                alert(`✅ Herramienta "${toolData.name}" agregada exitosamente!`);
-                
-                // Limpiar formulario
-                setToolData({
-                    name: "",
-                    category: "",
-                    replacement_cost: "",
-                    states: 1
-                });
-                setAutoCompleteInfo(null);
-                
+                alert(`✅ Herramientas agregadas exitosamente!`);
                 navigate("/ToolList");
             })
             .catch(error => {
-                console.error("❌ Error al agregar herramienta:", error);
-                if (error.response && error.response.data) {
-                    alert(`Error: ${error.response.data}`);
-                } else {
-                    alert("Error al agregar la herramienta. Intenta nuevamente.");
-                }
+                console.error("❌ Error:", error);
+                alert("Error al agregar. Revisa la consola.");
             });
     };
 
@@ -417,6 +343,31 @@ const AddTools = () => {
                                 },
                             }}
                         />
+
+                        <TextField
+                            label="Cantidad a Crear"
+                            type="number"
+                            value={quantity}
+                            onChange={(e) => setQuantity(e.target.value)}
+                            fullWidth
+                            required
+                            placeholder="1"
+                            inputProps={{ min: 1 }}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    '&:hover fieldset': {
+                                        borderColor: 'rgba(255, 94, 0, 0.5)',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: 'rgba(255, 94, 0, 1)',
+                                    },
+                                },
+                                '& .MuiInputLabel-root.Mui-focused': {
+                                    color: 'rgba(255, 94, 0, 1)',
+                                },
+                            }}
+                        />
+
                         {/* Botones */}
                         <Stack direction="row" spacing={2}>
                             <Button

@@ -74,7 +74,7 @@ public class LoanToolsServices {
         }
 
 
-        Tool currentTool = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/api/Tool/tool/" + loanToolsEntity.getToolid(), Tool.class );
+        Tool currentTool = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/api/Tools/tool/" + loanToolsEntity.getToolid(), Tool.class );
 
         // Obtener todos los préstamos del cliente
         List<LoanToolsEntity> clientLoans = loanToolsRepository.findAllByClientidAndStatus(loanToolsEntity.getClientid(), "Active");
@@ -122,7 +122,7 @@ public class LoanToolsServices {
 
         // 5. Validar herramienta
         System.out.println("Buscando herramienta con ID: " + loanToolsEntity.getToolid());
-        Tool herramienta = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/api/Tools/name/tool/" + loanToolsEntity.getToolid(), Tool.class );
+        Tool herramienta = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/api/Tools/tool/" + loanToolsEntity.getToolid(), Tool.class );
 
         System.out.println("Herramienta encontrada: " + herramienta);
 
@@ -130,6 +130,7 @@ public class LoanToolsServices {
         System.out.println("Obteniendo estados de herramientas");
         StateTools[] statetools = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/api/statetools/", StateTools[].class);
         List<StateTools> estados = Arrays.asList(statetools);
+        System.out.println("Estados de herramientas: " + estados);
 
 
         // Validar si la herramienta está disponible
@@ -150,7 +151,8 @@ public class LoanToolsServices {
 
             Long estadoPrestado = estados.get(1).getId();
             herramienta.setStates(estadoPrestado);
-            restTemplate.put("http://GESTIONINVDEHERRMICROSERVICES/api/tools/UpdateTool", herramienta);
+            System.out.println(herramienta);
+            restTemplate.put("http://GESTIONINVDEHERRMICROSERVICES/api/Tools/UpdateTool", herramienta);
             System.out.println("Estado de herramienta actualizado correctamente");
 
             // 9. Guardar el préstamo
@@ -178,7 +180,7 @@ public class LoanToolsServices {
 
 
 
-            restTemplate.put("http://GESTIONINVDEHERRMICROSERVICES/api/tools/UpdateTool", herramienta);
+            restTemplate.put("http://GESTIONINVDEHERRMICROSERVICES/api/Tools/UpdateTool", herramienta);
 
 
             throw new RuntimeException("Error al crear el préstamo: " + e.getMessage());
@@ -291,7 +293,7 @@ public class LoanToolsServices {
     //Se cambia el estado de la herramienta actual a que esta disponble, falta actualizar en el kardex
     public LoanToolsEntity returnLoanTools(Long userid, Long toolid) {
         // Buscar herramienta
-        Tool tool = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/api/Tools/name/tool/" + toolid, Tool.class );
+        Tool tool = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/api/Tools/tool/" + toolid, Tool.class );
 
         // Buscar préstamo asociado
         var loan = loanToolsRepository.findByClientidAndToolid(userid, toolid)
@@ -377,7 +379,7 @@ public class LoanToolsServices {
         LoanToolsEntity loan = loanToolsRepository.findById(loanId)
                 .orElseThrow(() -> new RuntimeException("Loan not found: " + loanId));
 
-        Tool tool = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/api/Tool/tool/" + loan.getToolid(), Tool.class );
+        Tool tool = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/api/Tools/tool/" + loan.getToolid(), Tool.class );
 
         Amountsandrates rates = restTemplate.getForObject("http://GESTIONDEMONTYTARMICROSERVICES/api/AmountandRates/" + 1L, Amountsandrates.class);
 

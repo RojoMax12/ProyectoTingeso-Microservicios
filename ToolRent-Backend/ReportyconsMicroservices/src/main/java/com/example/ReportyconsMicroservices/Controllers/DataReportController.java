@@ -1,26 +1,24 @@
 package com.example.ReportyconsMicroservices.Controllers;
 
-import com.example.proyectotingeso.Entity.DataReportEntity;
-import com.example.proyectotingeso.Services.DataReportServices;
+
+import com.example.ReportyconsMicroservices.Entity.DataReportEntity;
+import com.example.ReportyconsMicroservices.Services.DataReportServices;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/DataReport")
 @CrossOrigin("*")
-public class DataReportController {
+public class DataReportController{
 
     @Autowired
     DataReportServices dataReportService;
 
-    // Crear DataReportEntity
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PostMapping("/")
     public ResponseEntity<DataReportEntity> createDataReport(@RequestBody DataReportEntity dataReportEntity) {
