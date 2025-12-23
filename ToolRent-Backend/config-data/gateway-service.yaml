@@ -13,7 +13,6 @@ eureka:
 spring:
   cloud:
     gateway:
-      default-filters:
       globalcors:
         cors-configurations:
           '[/**]':
