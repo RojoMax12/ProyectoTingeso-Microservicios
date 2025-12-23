@@ -49,8 +49,8 @@ spring:
           uri: lb://GESTIONDEPRESTYDEVMICROSERVICES
           predicates:
             - Path=/api/LoanTools/**
-        - id: backends-service
-          uri: lb://backends-service
+        - id: m1-inventario-service
+          uri: lb://m1-inventario-service
           predicates:
             - Path=/api/Tools/**, /api/statetools/**
         - id: ReportyconsMicroservices
