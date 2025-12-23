@@ -33,27 +33,27 @@ spring:
         locator:
           enabled: true
       routes:
-        - id: Gestiondeclientes
-          uri: lb://GESTIONDECLIENTES
+        - id: m3-clientes-service
+          uri: lb://m3-clientes-service
           predicates:
             - Path=/api/Client/**, /api/stateuser/**
-        - id: GestiondekarymovMicroservices
-          uri: lb://GESTIONDEKARYMOVMICROSERVICES
+        - id: m5-karymov-service
+          uri: lb://m5-karymov-service
           predicates:
             - Path=/api/kardex/**
-        - id: GestiondemontytarMicroservices
-          uri: lb://GESTIONDEMONTYTARMICROSERVICES
+        - id: m4-montytar-service
+          uri: lb://m4-montytar-service
           predicates:
             - Path=/api/AmountandRates/**
-        - id: GestiondePrestyDevMicroservices
-          uri: lb://GESTIONDEPRESTYDEVMICROSERVICES
+        - id: m2-prestydev-service
+          uri: lb://m2-prestydev-service
           predicates:
             - Path=/api/LoanTools/**
         - id: m1-inventario-service
           uri: lb://m1-inventario-service
           predicates:
             - Path=/api/Tools/**, /api/statetools/**
-        - id: ReportyconsMicroservices
-          uri: lb://REPORTYCONSMICROSERVICES
+        - id: m6-repoycons-service
+          uri: lb://m6-repoycons-service
           predicates:
             - Path=/api/report/**, /api/DataReport/**
