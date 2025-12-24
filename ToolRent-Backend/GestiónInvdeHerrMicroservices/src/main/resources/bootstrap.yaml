@@ -1,4 +1,4 @@
-  spring:
+spring:
   application:
     name: m1-inventario-service
   cloud:
@@ -28,8 +28,6 @@
   jpa:
     hibernate:
       ddl-auto: update
-
-
 eureka:
   client:
     fetch-registry: true
