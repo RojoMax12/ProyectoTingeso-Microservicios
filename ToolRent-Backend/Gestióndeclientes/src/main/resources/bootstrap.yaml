@@ -1,6 +1,6 @@
 spring:
   application:
-    name: Gestiondeclientes
+    name: m3-clientes-service
   cloud:
     config:
       enabled: true
@@ -30,3 +30,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

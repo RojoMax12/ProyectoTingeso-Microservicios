@@ -1,6 +1,6 @@
 spring:
   application:
-    name: GestiondemontytarMicroservices
+    name: m4-montytar-service
   cloud:
     config:
       enabled: true
@@ -29,3 +29,9 @@ spring:
     hibernate:
       ddl-auto: update
 
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
