@@ -9,52 +9,62 @@ eureka:
       defaultZone: http://eureka-service:8761/eureka
   instance:
     hostname: gateway-service
+    prefer-ip-address: true # Recomendado para Kubernetes
 
 spring:
   cloud:
     gateway:
-    discovery:
-        locator:
-          enabled: true
-    default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
-    globalcors:
+      # --- CORRECCIÓN CRÍTICA PARA EL 403 ---
+      globalcors:
+        add-to-simple-url-handler-mapping: true # Permite que OPTIONS pase al manejador de CORS
         cors-configurations:
-          '[/**]':    
-            allowedOriginPatterns: 
-            - "http://127.0.0.1:*"
-            - "http://localhost:*"
-            allowedMethods: "*"
+          '[/**]':
+            allowedOriginPatterns:
+              - "http://127.0.0.1:*"
+              - "http://localhost:*"
+            allowedMethods:
+              - "GET"
+              - "POST"
+              - "PUT"
+              - "DELETE"
+              - "OPTIONS"
             allowedHeaders: "*"
             allowCredentials: true
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
       
-    routes:
-      - id: m1-inventario-service
-        uri: lb://m1-inventario-service
-        predicates:
-          - Path=/api/Tools/**, /api/statetools/**
+      discovery:
+        locator:
+          enabled: true
+
+      routes:
+        - id: m1-inventario-service
+          uri: lb://m1-inventario-service
+          predicates:
+            - Path=/api/Tools/**, /api/statetools/**
           
-      - id: m2-prestydev-service
-        uri: lb://m2-prestydev-service
-        predicates:
-          - Path=/api/LoanTools/**
+        - id: m2-prestydev-service
+          uri: lb://m2-prestydev-service
+          predicates:
+            - Path=/api/LoanTools/**
 
-      - id: m3-clientes-service
-        uri: lb://m3-clientes-service
-        predicates:
-          - Path=/api/Client/**, /api/stateuser/**
+        - id: m3-clientes-service
+          uri: lb://m3-clientes-service
+          predicates:
+            - Path=/api/Client/**, /api/stateuser/**
 
-      - id: m4-montytar-service
-        uri: lb://m4-montytar-service
-        predicates:
-          - Path=/api/AmountandRates/**
+        - id: m4-montytar-service
+          uri: lb://m4-montytar-service
+          predicates:
+            - Path=/api/AmountandRates/**
 
-      - id: m5-karymov-service
-        uri: lb://m5-karymov-service
-        predicates:
-          - Path=/api/kardex/**
+        - id: m5-karymov-service
+          uri: lb://m5-karymov-service
+          predicates:
+            - Path=/api/kardex/**
       
-      - id: m6-repoycons-service
-        uri: lb://m6-repoycons-service
-        predicates:
-          - Path=/api/report/**, /api/DataReport/**
+        - id: m6-repoycons-service
+          uri: lb://m6-repoycons-service
+          predicates:
+            - Path=/api/report/**, /api/DataReport/**
