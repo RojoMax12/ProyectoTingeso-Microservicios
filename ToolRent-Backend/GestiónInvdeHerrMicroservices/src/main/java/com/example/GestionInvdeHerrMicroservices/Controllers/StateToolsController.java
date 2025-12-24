@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/statetools")
-@CrossOrigin("*")
 public class StateToolsController {
 
     @Autowired
