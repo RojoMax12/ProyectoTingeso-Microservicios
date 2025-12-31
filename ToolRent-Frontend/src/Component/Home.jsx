@@ -22,6 +22,7 @@ import ToolServices from "../Services/ToolServices";
 import KardexServices from "../Services/KardexServices";
 import ReportIcon from '@mui/icons-material/Report';
 
+
 const theme = createTheme({
   palette: {
     background: {
@@ -46,7 +47,7 @@ const Home = () => {
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [lateFeeloan, setLateFeeLoan] = useState(0);
   const [lateFeeLoading, setLateFeeLoading] = useState(false);
-  const [damageFee, setDamageFee] = useState(0);
+  const [repairLoading, setRepairLoading] = useState(false);
   // NUEVO ESTADO: Para controlar si ya se pagó
   const [isPaid, setIsPaid] = useState(false);
 
@@ -197,35 +198,17 @@ const Home = () => {
 
   const handleOpenModal = (loanTool) => {
     setSelectedLoan(loanTool);
-    TakeDamageLoan(loanTool.id);
     setOpenModal(true);
-    setLateFeeLoading(true);
-    setIsPaid(false); // RESET: Al abrir modal, resetear estado de pago
-    calculateLateFeeForLoan(loanTool.id);
   };
 
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedLoan(null);
-    setDamageFee(0);
     setLateFeeLoan(0);
     setLateFeeLoading(false);
     setIsPaid(false); // RESET: Al cerrar modal, resetear estado de pago
   };
 
-  const calculateLateFeeForLoan = (loanId) => {
-    LoanToolServices.calculateLateFee(loanId)
-      .then(response => {
-        setLateFeeLoan(response.data || 0);
-        setLateFeeLoading(false);
-        console.log("Late fee calculated:", response.data);
-      })
-      .catch(error => {
-        setLateFeeLoan(0);
-        setLateFeeLoading(false);
-        console.error("Error calculating late fee:", error);
-      });
-  };
 
   const returntool = (iduser, idtool) => {
     if (!iduser || !idtool) {
@@ -251,29 +234,43 @@ const Home = () => {
       });
   };
 
-  const repairtool = (idtool) => {
-    if (!idtool) {
-      alert("Faltan datos para reparar la herramienta.");
-      return;
-    }
-    console.log("Reparando herramienta:", { idtool });
-    ToolServices.repairtool(idtool)
-      .then(response => {
-        alert("Herramienta enviada a reparación con éxito");
-        const emailCliente = clientData.email || "";
-        KardexServices.create({
-          idtool: idtool,
-          username: emailCliente,
-          date: new Date(),
-          stateToolsId: 3,
-          quantity: 1
-        });
-        toolrentWithId(clientData.id);
-      })
-      .catch(error => {
-        console.error("Error al reparar herramienta:", error);
+
+const repairtool = (idtool) => {
+  if (!idtool || !selectedLoan?.id) return;
+
+  setRepairLoading(true);
+
+  ToolServices.repairtool(idtool)
+    .then(() => {
+      const emailCliente = clientData.email || "";
+
+      KardexServices.create({
+        idtool,
+        username: emailCliente,
+        date: new Date(),
+        stateToolsId: 3,
+        quantity: 1
       });
-  };
+
+      // 🔥 REFRESH DEL PRÉSTAMO
+      return LoanToolServices.getid(selectedLoan.id);
+    })
+    .then(res => {
+      // 🔥 UPDATE INSTANTÁNEO DE LA MODAL
+      setSelectedLoan(prev => ({
+        ...prev,
+        ...res.data
+      }));
+    })
+    .catch(err => {
+      console.error("Error al reparar herramienta:", err);
+    })
+    .finally(() => {
+      setRepairLoading(false);
+    });
+};
+
+
 
   const payAllFees = (loanId) => {
     console.log("ID del préstamo para pagar:", loanId);
@@ -308,9 +305,48 @@ const Home = () => {
     );
   };
 
-  const TakeDamageLoan = (idloan) => {
-    LoanToolServices.registerDamageandReposition(idloan)
+
+useEffect(() => {
+  if (!openModal || !selectedLoan?.id) return;
+
+  let alive = true;
+
+  setLateFeeLoading(true);
+  setLateFeeLoan(0);
+  setIsPaid(false);
+
+  LoanToolServices.registerDamageandReposition(selectedLoan.id)
+    .then(() => LoanToolServices.getid(selectedLoan.id))
+    .then(res => {
+      if (!alive) return;
+
+      // 🔥 ACTUALIZA selectedLoan CON DATOS NUEVOS
+      setSelectedLoan(prev => ({
+        ...prev,
+        ...res.data
+      }));
+    })
+    .catch(() => {})
+    .finally(() => {
+      if (alive) setLateFeeLoading(false);
+    });
+
+  LoanToolServices.calculateLateFee(selectedLoan.id)
+    .then(res => {
+      if (alive) setLateFeeLoan(res.data || 0);
+    })
+    .catch(() => {
+      if (alive) setLateFeeLoan(0);
+    });
+
+  return () => {
+    alive = false;
   };
+
+}, [openModal, selectedLoan?.id]);
+
+
+
 
     
 
@@ -740,7 +776,6 @@ const Home = () => {
               onClick={() => {
                 console.log("Reparar clicked", selectedLoan?.toolid);
                 repairtool(selectedLoan.toolid);
-                handleCloseModal();
               }}
             >
               🔧 Reparar
@@ -773,6 +808,6 @@ const Home = () => {
       </Modal>
     </ThemeProvider>
   );
-};
+}
 
 export default Home;

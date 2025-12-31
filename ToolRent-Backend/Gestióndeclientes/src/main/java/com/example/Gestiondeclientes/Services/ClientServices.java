@@ -81,7 +81,7 @@ public class ClientServices {
             // 1. Cambia List.class por LoanTools[].class
             // Esto obliga a Jackson a mapear los campos correctamente
             LoanTools[] loanToolsArray = restTemplate.getForObject(
-                    "http://GESTIONDEPRESTYDEVMICROSERVICES/api/LoanTools/late",
+                    "http://m1-inventario-service/api/LoanTools/late",
                     LoanTools[].class);
 
             if (loanToolsArray == null || loanToolsArray.length == 0) {

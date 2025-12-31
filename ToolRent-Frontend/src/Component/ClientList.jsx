@@ -176,7 +176,6 @@ const ClientList = () => {
                 </List>
             </Drawer>
 
-            {/* Fondo que cubre toda la pantalla */}
             <Box
                 sx={{
                     position: "fixed",
@@ -189,15 +188,14 @@ const ClientList = () => {
                 }}
             />
 
-            {/* Contenido principal */}
-            <Box sx={{
-                minHeight: "100vh",
+            {/* Contenedor principal */}
+            <Box sx={{ 
                 backgroundColor: "#FEF3E2",
                 py: 4,
-                display: "flex",
                 alignItems: "center",
                 pt: 8
             }}>
+                
                 <Box
                     sx={{
                         maxWidth: 1200,

@@ -4,17 +4,24 @@ package com.example.GestiondekarymovMicroservices.Services;
 import com.example.GestiondekarymovMicroservices.Entity.KardexEntity;
 import com.example.GestiondekarymovMicroservices.Models.Tool;
 import com.example.GestiondekarymovMicroservices.Repository.KardexRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class KardexServices {
+
+    private static final Logger logger = LoggerFactory.getLogger(KardexServices.class);
 
     @Autowired
     private KardexRepository kardexRepository;
@@ -45,7 +52,11 @@ public class KardexServices {
     }
 
     public List<KardexEntity> HistoryKardexTool(String nameTool) {
-        List<Tool> tools = restTemplate.getForObject("http://GESTIONINVDEHERRMICROSERVICES/Tools/Allbyname/" + nameTool, List.class);
+        Tool[] toolsArray = restTemplate.getForObject(
+                "http://m1-inventario-service/api/Tools/Allbyname/" + nameTool,
+                Tool[].class);
+
+        List<Tool> tools = Arrays.asList(toolsArray);
 
         if (tools == null || tools.isEmpty()) {
             throw new IllegalArgumentException("No existe la herramienta con nombre: " + nameTool);
@@ -64,24 +75,34 @@ public class KardexServices {
 
 
     public List<Object[]> TopToolKardexTool() {
-        // 1. Obtenemos los IDs y conteos desde la base de datos de este microservicio
+        // 1. Obtener datos locales
         List<Object[]> results = kardexRepository.getTopToolIdsAndCounts();
+
+        if (results == null || results.isEmpty()) {
+            logger.info("No se encontraron movimientos en el Kardex para el ranking.");
+            return Collections.emptyList();
+        }
 
         return results.stream().map(result -> {
             Long toolId = ((Number) result[0]).longValue();
             Long total = ((Number) result[1]).longValue();
 
-            // 2. Llamada al microservicio de Tools para obtener los detalles
-            // Nota: Asegúrate de tener configurado RestTemplate o usar Feign
-            Tool toolData = restTemplate.getForObject(
-                    "http://GESTIONINVDEHERRMICROSERVICES/api/Tools/tool/" + toolId,
-                    Tool.class
-            );
+            try {
+                // 2. Llamada al microservicio de Inventario
+                // Sugerencia: Si es posible, crea un endpoint en Tools que reciba una lista de IDs
+                Tool toolData = restTemplate.getForObject(
+                        "http://m1-inventario-service/api/Tools/tool/" + toolId,
+                        Tool.class
+                );
 
-            // 3. Empaquetamos en un Object[] para respetar el tipo de retorno solicitado
-            // Índice 0: El objeto Tool completo, Índice 1: El total de préstamos
-            return new Object[] { toolData, total };
+                logger.debug("Herramienta recuperada: {} (ID: {})", toolData != null ? toolData.getName() : "N/A", toolId);
 
+                return new Object[] { toolId, toolData != null ? toolData.getName() : "Desconocida", total };
+            } catch (RestClientException e) {
+                logger.error("Error al conectar con m1-inventario-service para ID {}: {}", toolId, e.getMessage());
+                // Retornamos datos parciales para no romper todo el reporte
+                return new Object[] { toolId, "Error al cargar nombre", total };
+            }
         }).collect(Collectors.toList());
     }
 

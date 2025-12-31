@@ -33,5 +33,9 @@ const getTopToolsReport = () => {
     return httpClient.get("/api/report/AllReportTopTool");
 }
 
+const deleteReportsById = (reportsIds) => {
+    return httpClient.delete('/api/report/Deletereports', { data: reportsIds });
+};
 
-export default { createLoanReport, reportdate, getallReports, getallReportsLoans, createClientLateReport, getallReportsClientLate, createTopToolsReport, getTopToolsReport };
+
+export default { createLoanReport, reportdate, getallReports, getallReportsLoans, createClientLateReport, getallReportsClientLate, createTopToolsReport, getTopToolsReport, deleteReportsById };

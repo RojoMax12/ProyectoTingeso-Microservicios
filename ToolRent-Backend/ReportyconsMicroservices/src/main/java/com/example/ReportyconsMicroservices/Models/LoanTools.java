@@ -16,15 +16,11 @@ public class LoanTools {
 
     private Long id;
 
-
     private LocalDate initiallenddate;
-
 
     private LocalDate finalreturndate;
 
-
     private Long clientid;
-
 
     private Long toolid;
 

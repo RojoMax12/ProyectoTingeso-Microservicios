@@ -337,22 +337,21 @@ const RegisterClient = () => {
 
             {/* Contenedor principal */}
             <Box sx={{ 
-                minHeight: "100vh", 
-                backgroundColor: "#FEF3E2", 
-                py: 4, 
-                display: "flex", 
+                backgroundColor: "#FEF3E2",
+                py: 4,
                 alignItems: "center",
                 pt: 8
             }}>
                 <Paper
                     sx={{
-                        maxWidth: 600,
-                        mx: "auto",
-                        p: 4,
-                        borderRadius: 4,
-                        boxShadow: "0 8px 32px rgba(255, 94, 0, 0.1)",
-                        border: "2px solid rgba(255, 94, 0, 0.1)",
-                        backgroundColor: "#fff"
+                        maxWidth: 600, 
+                        mx: "auto", 
+                        backgroundColor: "#fff8f0", 
+                        borderRadius: 4, 
+                        boxShadow: 6, 
+                        p: 4, 
+                        border: "2px solid rgba(255, 94, 0, 0.2)",
+                        width: '90%' // Ajuste para móviles
                     }}
                 >
                     <Typography 

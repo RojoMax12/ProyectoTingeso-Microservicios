@@ -4,12 +4,17 @@ package com.example.ReportyconsMicroservices.Services;
 import com.example.ReportyconsMicroservices.Entity.DataReportEntity;
 import com.example.ReportyconsMicroservices.Entity.ReportEntity;
 import com.example.ReportyconsMicroservices.Models.Client;
+import com.example.ReportyconsMicroservices.Models.Kardex;
 import com.example.ReportyconsMicroservices.Models.LoanTools;
 import com.example.ReportyconsMicroservices.Repository.DataReportRepository;
 import com.example.ReportyconsMicroservices.Repository.ReportRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 
@@ -19,6 +24,8 @@ import java.util.*;
 
 @Service
 public class ReportServices {
+
+    private static final Logger logger = LoggerFactory.getLogger(Kardex.class);
 
     @Autowired
     ReportRepository reportRepository;
@@ -34,154 +41,212 @@ public class ReportServices {
         return reportRepository.save(report);
     }
 
+    @Transactional // 1. Garantiza que si falla el detalle, se borre el reporte principal (Rollback)
     public List<ReportEntity> ReportLoanTools() {
-        // 1. CAMBIO CRÍTICO: Usar LoanTools[].class en lugar de List.class
-        // Esto evita que Jackson convierta los datos en LinkedHashMap
-        LoanTools[] loantoolsArray = restTemplate.getForObject(
-                "http://GESTIONDEPRESTYDEVMICROSERVICES/api/LoanTools/Allloantoolstatusandrentalfee",
-                LoanTools[].class
-        );
+        LoanTools[] loantoolsArray;
 
-        // Verificación de seguridad
-        if (loantoolsArray == null) {
-            return new ArrayList<>();
+        // 2. Manejo de errores de comunicación externa
+        try {
+            loantoolsArray = restTemplate.getForObject(
+                    "http://m2-prestydev-service/api/LoanTools/Allloantoolstatusandrentalfee",
+                    LoanTools[].class
+            );
+        } catch (RestClientException e) {
+            logger.error("Error al conectar con m2-prestydev-service: {}", e.getMessage());
+            // Puedes lanzar una excepción personalizada o devolver lista vacía según tu lógica
+            return Collections.emptyList();
         }
 
-        System.out.println("Préstamos encontrados: " + loantoolsArray.length);
-        LocalDate date = LocalDate.now();
-
-        // 2. Crear y guardar el reporte principal
-        ReportEntity reportEntity = new ReportEntity();
-        reportEntity.setName("ReportLoanTools");
-        reportEntity.setDate(date);
-
-        // Si IntelliJ te marca error aquí, recuerda hacer el cast: (ReportEntity)
-        ReportEntity savedReport = reportRepository.save(reportEntity);
-
-        // 3. Crear los detalles del reporte
-        List<DataReportEntity> dataReportEntities = new ArrayList<>();
-
-        // Al ser un Array, el for-each ahora funciona perfectamente con el tipo LoanTools
-        for (LoanTools loan : loantoolsArray) {
-            DataReportEntity dataReportEntity = new DataReportEntity();
-            dataReportEntity.setIdLoanTool(loan.getId());
-            dataReportEntity.setIdreport(savedReport.getId());
-
-            dataReportEntities.add(dataReportEntity);
+        // 3. Validación de contenido
+        if (loantoolsArray == null || loantoolsArray.length == 0) {
+            logger.warn("No se encontraron préstamos para reportar.");
+            return Collections.emptyList();
         }
 
-        // 4. Persistir los datos y retornar
-        dataReportRepository.saveAll(dataReportEntities);
+        try {
+            // 4. Persistencia del Reporte Principal
+            ReportEntity reportEntity = new ReportEntity();
+            reportEntity.setName("ReportLoanTools");
+            reportEntity.setDate(LocalDate.now());
 
-        return List.of(savedReport);
+            ReportEntity savedReport = reportRepository.save(reportEntity);
+
+            // 5. Mapeo de detalles (DataReportEntity)
+            List<DataReportEntity> dataReportEntities = Arrays.stream(loantoolsArray)
+                    .map(loan -> {
+                        DataReportEntity detail = new DataReportEntity();
+                        detail.setIdLoanTool(loan.getId());
+                        detail.setIdreport(savedReport.getId());
+                        return detail;
+                    })
+                    .toList();
+
+            // 6. Guardado masivo
+            dataReportRepository.saveAll(dataReportEntities);
+
+            return List.of(savedReport);
+
+        } catch (Exception e) {
+            logger.error("Error interno al procesar el reporte: {}", e.getMessage());
+            // Al estar en @Transactional, cualquier RuntimeException provocará Rollback
+            throw new RuntimeException("Error al generar el reporte localmente", e);
+        }
     }
 
+    @Transactional // Crucial para evitar reportes sin detalles si falla la DB
     public List<ReportEntity> ReportClientLoanLate() {
-        // 1. CAMBIO CLAVE: Usar el Array Client[].class para que Jackson mapee correctamente los objetos
-        Client[] clientsArray = restTemplate.getForObject(
-                "http://GESTIONDECLIENTES/api/Client/AllClientLoanLate",
-                Client[].class
-        );
+        Client[] clientsArray;
 
-        // Verificación de nulidad por seguridad
-        if (clientsArray == null) {
-            return new ArrayList<>();
+        // 1. Manejo de error al llamar al microservicio m3-clientes
+        try {
+            clientsArray = restTemplate.getForObject(
+                    "http://m3-clientes-service/api/Client/AllClientLoanLate",
+                    Client[].class
+            );
+        } catch (RestClientException e) {
+            logger.error("Error de comunicación con m3-clientes-service: {}", e.getMessage());
+            return Collections.emptyList();
         }
 
-        // Crear el ReportEntity principal
-        ReportEntity reportEntity = new ReportEntity();
-        reportEntity.setName("ReportClientLoanLate");
-        reportEntity.setDate(LocalDate.now());
-
-        // Guardar el reporte (asegúrate de que el repositorio devuelva ReportEntity)
-        ReportEntity savedReport = reportRepository.save(reportEntity);
-
-        // Lista para almacenar los detalles del reporte
-        List<DataReportEntity> dataReportEntities = new ArrayList<>();
-
-        // 2. Iterar sobre el Array. Ahora 'client' será reconocido como tipo Client y no como un Map.
-        for (Client client : clientsArray) {
-            DataReportEntity dataReportEntity = new DataReportEntity();
-            dataReportEntity.setIdClient(client.getId());
-            dataReportEntity.setIdreport(savedReport.getId());
-
-            dataReportEntities.add(dataReportEntity);
+        // 2. Validación de datos recibidos
+        if (clientsArray == null || clientsArray.length == 0) {
+            logger.info("No se encontraron clientes con préstamos atrasados.");
+            return Collections.emptyList();
         }
 
-        // Guardar todos los detalles en la base de datos
-        dataReportRepository.saveAll(dataReportEntities);
+        try {
+            // 3. Crear el ReportEntity principal
+            ReportEntity reportEntity = new ReportEntity();
+            reportEntity.setName("ReportClientLoanLate");
+            reportEntity.setDate(LocalDate.now());
 
-        return List.of(savedReport);
+            ReportEntity savedReport = reportRepository.save(reportEntity);
+
+            // 4. Mapear los clientes a entidades de detalle
+            List<DataReportEntity> dataReportEntities = Arrays.stream(clientsArray)
+                    .map(client -> {
+                        DataReportEntity detail = new DataReportEntity();
+                        detail.setIdClient(client.getId()); // Usamos el ID del cliente del microservicio
+                        detail.setIdreport(savedReport.getId());
+                        return detail;
+                    })
+                    .toList();
+
+            // 5. Guardar detalles
+            dataReportRepository.saveAll(dataReportEntities);
+
+            return List.of(savedReport);
+
+        } catch (Exception e) {
+            logger.error("Error al persistir el reporte de clientes morosos: {}", e.getMessage());
+            // Lanza la excepción para que @Transactional haga el Rollback
+            throw new RuntimeException("Fallo interno al procesar reporte de clientes", e);
+        }
     }
 
 
+    @Transactional
     public List<ReportEntity> createTopToolsReport() {
-        // 1. CAMBIO FUNDAMENTAL: Usar Object[][].class en lugar de List.class
-        Object[][] ranking = restTemplate.getForObject(
-                "https://GESTIONDEKARYMOVMICROSERVICES/api/kardex/TopTool",
-                Object[][].class
-        );
+        Object[][] ranking;
 
+        // 1. Manejo de errores de comunicación externa
+        try {
+            ranking = restTemplate.getForObject(
+                    "https://m5-karymov-service/api/kardex/TopTool",
+                    Object[][].class
+            );
+        } catch (RestClientException e) {
+            logger.error("Error al obtener el ranking desde el servicio m5-karymov: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+
+        // 2. Validación de datos
         if (ranking == null || ranking.length == 0) {
-            return new ArrayList<>();
+            logger.info("El servicio de ranking devolvió una lista vacía.");
+            return Collections.emptyList();
         }
 
-        // Crear el reporte maestro
-        ReportEntity reportEntity = new ReportEntity();
-        reportEntity.setName("ReportTopTools");
-        reportEntity.setDate(LocalDate.now());
-        ReportEntity savedReport = reportRepository.save(reportEntity);
+        try {
+            // 3. Crear el reporte principal
+            ReportEntity reportEntity = new ReportEntity();
+            reportEntity.setName("ReportTopTools");
+            reportEntity.setDate(LocalDate.now());
+            ReportEntity savedReport = reportRepository.save(reportEntity);
 
-        List<DataReportEntity> dataReportEntities = new ArrayList<>();
+            List<DataReportEntity> dataReportEntities = new ArrayList<>();
 
-        // 2. Iterar sobre el array de arrays
-        for (Object[] row : ranking) {
-            // 3. USO DE Number: Jackson puede traer números como Integer o Double.
-            // Castear a Number y luego usar .longValue() es lo más seguro.
-            Long toolId = ((Number) row[0]).longValue();
-            String toolName = (String) row[1];
-            Long timesBorrowed = ((Number) row[2]).longValue();
+            // 4. Procesar la matriz de objetos
+            for (Object[] row : ranking) {
+                try {
+                    // Jackson suele deserializar números como Integer o Long. Number es el padre común.
+                    Long toolId = ((Number) row[0]).longValue();
+                    String toolName = (String) row[1];
+                    Long timesBorrowed = ((Number) row[2]).longValue();
 
-            // Imprimir para debug
-            System.out.println(String.format("ID: %d, Herramienta: %s, Veces Prestada: %d", toolId, toolName, timesBorrowed));
+                    DataReportEntity detail = new DataReportEntity();
+                    detail.setIdTool(toolId);
+                    detail.setIdreport(savedReport.getId());
+                    detail.setNumber_of_times_borrowed(timesBorrowed);
 
-            DataReportEntity dataReportEntity = new DataReportEntity();
-            dataReportEntity.setIdTool(toolId);
-            dataReportEntity.setIdreport(savedReport.getId());
-            dataReportEntity.setNumber_of_times_borrowed(timesBorrowed);
+                    dataReportEntities.add(detail);
 
-            dataReportEntities.add(dataReportEntity);
+                    logger.debug("Procesado: ID {}, Herramienta: {}", toolId, toolName);
+
+                } catch (Exception e) {
+                    logger.warn("Error al procesar una fila del ranking: {}", e.getMessage());
+                    // Continuamos con la siguiente fila si una está corrupta
+                }
+            }
+
+            // 5. Persistencia masiva
+            dataReportRepository.saveAll(dataReportEntities);
+
+            return List.of(savedReport);
+
+        } catch (Exception e) {
+            logger.error("Error crítico al generar el reporte TopTools: {}", e.getMessage());
+            // Provoca Rollback para no dejar un ReportEntity sin detalles
+            throw new RuntimeException("Error interno en la generación del reporte", e);
         }
-
-        dataReportRepository.saveAll(dataReportEntities);
-
-        List<ReportEntity> createdReports = new ArrayList<>();
-        createdReports.add(savedReport);
-        return createdReports;
     }
 
 
-
-
-    public List<ReportEntity> ReportfilterDate(LocalDate initdate, LocalDate findate){
+    public List<ReportEntity> ReportfilterDate(LocalDate initdate, LocalDate findate) {
         List<ReportEntity> reports = reportRepository.findByDateBetweenOrderByDateDesc(initdate, findate);
         return reports;
     }
 
-    public List<ReportEntity> ReportTopToolsAll(){
+    public List<ReportEntity> ReportTopToolsAll() {
         List<ReportEntity> reports = reportRepository.findByName("ReportTopTools");
         return reports;
     }
 
-    public List<ReportEntity> GetAllReportClientLoanLate(){
+    public List<ReportEntity> GetAllReportClientLoanLate() {
         List<ReportEntity> reports = reportRepository.findByName("ReportClientLoanLate");
         return reports;
     }
 
-    public List<ReportEntity> GetAllReportLoanTools(){
+    public List<ReportEntity> GetAllReportLoanTools() {
         List<ReportEntity> reports = reportRepository.findByName("ReportLoanTools");
         return reports;
     }
 
+    @Transactional
+    public void deleteReportsById(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            logger.warn("La lista de IDs para eliminar está vacía.");
+            return;
+        }
 
+        try {
+            // Spring Data JPA maneja esto internamente con una sola consulta eficiente
+            reportRepository.deleteAllById(ids);
+
+            logger.info("Se eliminaron correctamente {} reportes con IDs: {}", ids.size(), ids);
+        } catch (Exception e) {
+            logger.error("Error al eliminar los reportes por ID: {}", e.getMessage());
+            // Importante lanzar la excepción para que @Transactional ejecute el Rollback
+            throw new RuntimeException("Error en la base de datos al intentar borrar reportes", e);
+        }
+    }
 }

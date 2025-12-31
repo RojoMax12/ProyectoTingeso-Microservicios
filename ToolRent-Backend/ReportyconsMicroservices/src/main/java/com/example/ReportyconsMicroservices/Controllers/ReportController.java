@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/report")
-@CrossOrigin("*")
 public class ReportController {
 
     @Autowired
@@ -76,6 +75,13 @@ public class ReportController {
         List<ReportEntity> reports = reportServices.ReportTopToolsAll();
         return ResponseEntity.ok(reports);
     }
+
+    @PreAuthorize(("hasAnyRole('USER','ADMIN')"))
+    @DeleteMapping("/Deletereports")
+    public void deleteReportsById(@RequestBody List<Long> reportsid){
+        reportServices.deleteReportsById(reportsid);
+    }
+
 
 
 

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ThemeProvider, CssBaseline, AppBar, Toolbar, Typography, Stack, Avatar, Button,
   Container, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  TextField, IconButton, Box, Paper
+  TextField, IconButton, Box, Paper, Divider
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import BuildIcon from "@mui/icons-material/Build";
@@ -17,6 +17,7 @@ import ContactsIcon from "@mui/icons-material/Contacts";     // 📇 Para Client
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings"; // 🛡️⚙️ Para Configuraciones (admin)
 import ReportIcon from '@mui/icons-material/Report'; // 📈 Para Reportes
+import StateToolsServices from "../Services/StateToolsServices"; // <-- Importación agregada
 
 
 const Configuration = () => {
@@ -59,6 +60,27 @@ const Configuration = () => {
     }
   });
 
+  const ferchAmountsandrates = async () => {
+    try {
+      const response = await AmountsandratesServices.getall();
+      const amountsAndRates = response.data;
+      if (amountsAndRates.length > 0) {
+        const config = amountsAndRates[0];
+        setDailyrentalrate(config.dailyrentalrate);
+        setDailylatefeefine(config.dailylatefeefine);
+        setReparationcharge(config.reparationcharge);
+      } else {
+        console.warn("No se encontraron montos y tarifas.");
+      }
+    } catch (error) {
+      console.error("Error al obtener montos y tarifas:", error);
+    }
+  };
+
+  React.useEffect(() => {
+    ferchAmountsandrates();
+  }, []);
+
 
   const updateAmountsAndRates = () => {
     const data = {
@@ -91,129 +113,213 @@ const Configuration = () => {
       });
   };
 
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+  const initializeToolStates = () => {
+    StateToolsServices.create()
+      .then((response) => {
+        alert("Estados de herramientas inicializados");
+        console.log("Estados de herramientas inicializados:", response.data);
+      }
+      )
+      .catch((error) => {
+        console.error("Error al inicializar estados de herramientas:", error);
+        alert("Error al inicializar estados de herramientas");
+      });
+  };
 
-          <IconButton
-              color="primary"
-              onClick={() => setDrawerOpen(true)}
-              sx={{ position: "fixed", top: 16, left: 16, zIndex: 10, backgroundColor: "#FA812F", boxShadow: 3 , '&:hover': { backgroundColor: "#FA812F" }}}
-          >
-              <MenuIcon />
-          </IconButton>
+return (
+  <ThemeProvider theme={theme}>
+    <CssBaseline />
 
-  
+    {/* BOTÓN PARA ABRIR EL DRAWER */}
+    <IconButton
+      onClick={() => setDrawerOpen(true)}
+      sx={{
+        position: "fixed",
+        top: 16,
+        left: 16,
+        zIndex: 1100,
+        backgroundColor: "#FA812F",
+        color: "white",
+        boxShadow: 3,
+        '&:hover': { backgroundColor: "#e06a1d" }
+      }}
+    >
+      <MenuIcon />
+    </IconButton>
 
-      {/* SIDEBAR */}
-      <Drawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        variant="temporary"
-        sx={{
-          [`& .MuiDrawer-paper`]: { width: 220, boxSizing: "border-box", backgroundColor: "#FEF3E2" }
-        }}
+    {/* SIDEBAR (DRAWER) */}
+    <Drawer
+      open={drawerOpen}
+      onClose={() => setDrawerOpen(false)}
+      variant="temporary"
+      sx={{
+        [`& .MuiDrawer-paper`]: { width: 220, boxSizing: "border-box", backgroundColor: "#FEF3E2" }
+      }}
+    >
+      <List>
+        {sidebarOptions.map((option) => (
+          <ListItem key={option.text} disablePadding>
+            <ListItemButton onClick={() => { navigate(option.path); setDrawerOpen(false); }}>
+              <ListItemIcon sx={{ color: "#FA812F" }}>{option.icon}</ListItemIcon>
+              <ListItemText primary={option.text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    </Drawer>
+
+    {/* CONTENIDO PRINCIPAL */}
+    <Container maxWidth="lg" sx={{ mt: 10, pb: 5 }}>
+      <Typography 
+        variant="h3" 
+        align="center" 
+        sx={{ fontWeight: "bold", color: "#FA812F", mb: 6 }}
       >
-        <List>
-          {sidebarOptions.map((option) => (
-            <ListItem key={option.text} disablePadding>
-              <ListItemButton onClick={() => { navigate(option.path); setDrawerOpen(false); }}>
-                <ListItemIcon sx={{ color: "#FA812F" }}>{option.icon}</ListItemIcon>
-                <ListItemText primary={option.text} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-      </Drawer>
+        ⚙️ Configuración del Sistema
+      </Typography>
 
-      {/* CONTENIDO PRINCIPAL */}
-      <Container
-        sx={{
-          mt: 12,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          minHeight: "80vh"
-    
-
-        }}
+      <Stack 
+        direction={{ xs: "column", md: "row" }} 
+        spacing={4} 
+        alignItems="flex-start" 
+        justifyContent="center"
       >
-        <Typography variant="h4" align="center" sx={{ fontWeight: "bold", color: "rgba(255, 94, 0, 1)", mb: 4 }}>
-          Configuración del Sistema
-        </Typography>
         
+        {/* PANEL DE CONFIGURACIONES ACTUALES */}
         <Paper
           sx={{
             p: 4,
-            boxShadow: 3,
-            minWidth: 400,
-            maxWidth: 600,
-            width: "100%",
-            borderRadius: 4, // <-- Súper redondo (32px)
-            backgroundColor: "#fff8f0",
-            border: "2px solid rgba(255, 94, 0, 0.2)"
+            width: { xs: "100%", md: "350px" },
+            borderRadius: 4,
+            backgroundColor: "#fff",
+            boxShadow: 2,
+            border: "1px solid rgba(0,0,0,0.05)"
           }}
         >
-          {/*Configuracion de los cargo y tarifas*/}
+          <Typography variant="h6" sx={{ fontWeight: "bold", mb: 3, color: "#555" }}>
+            Valores Actuales
+          </Typography>
+          
+          <Stack spacing={2}>
+            {[
+              { label: "Tarifa Préstamo", value: dailyrentalrate, icon: "💰" },
+              { label: "Multa Atraso", value: dailylatefeefine, icon: "⚠️" },
+              { label: "Cargo Reparación", value: reparationcharge, icon: "🔧" }
+            ].map((item, i) => (
+              <Box 
+                key={i} 
+                sx={{ 
+                  p: 2, 
+                  borderRadius: 3, 
+                  backgroundColor: "#FEF3E2", 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <Box>
+                  <Typography variant="caption" sx={{ color: "#888", display: 'block' }}>
+                    {item.label}
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: "bold", color: "#FA812F" }}>
+                    ${item.value || "0"}
+                  </Typography>
+                </Box>
+                <Typography variant="h5">{item.icon}</Typography>
+              </Box>
+            ))}
+          </Stack>
+        </Paper>
+
+        {/* PANEL DE EDICIÓN */}
+        <Paper
+          sx={{
+            p: 4,
+            maxWidth: 600,
+            width: "100%",
+            borderRadius: 4,
+            backgroundColor: "#fff8f0",
+            boxShadow: 4,
+            border: "2px solid rgba(255, 94, 0, 0.1)"
+          }}
+        >
           <Stack spacing={3}>
-            <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 , color: "rgba(255, 94, 0, 1)" }}>
-              Configuraciones de tarifas y cargos
+            <Typography variant="h6" sx={{ fontWeight: "bold", color: "rgba(255, 94, 0, 1)" }}>
+              Actualizar Parámetros
             </Typography>
-            
+
             <TextField
-              label="Tarifa diaria de préstamo"
+              label="Nueva Tarifa de Préstamo"
               variant="outlined"
               fullWidth
-              placeholder="Ej: 2000"
               type="number"
               value={dailyrentalrate}
               onChange={(e) => setDailyrentalrate(e.target.value)}
             />
-            
+
             <TextField
-              label="Multa por día de atraso"
+              label="Nueva Multa por Atraso"
               variant="outlined"
               fullWidth
-              placeholder="Ej: 5000"
               type="number"
               value={dailylatefeefine}
               onChange={(e) => setDailylatefeefine(e.target.value)}
             />
 
             <TextField
-              label="Cargo por reparación"
+              label="Nuevo Cargo por Reparación"
               variant="outlined"
               fullWidth
-              placeholder="Ej: 10000"
               type="number"
               value={reparationcharge}
               onChange={(e) => setReparationcharge(e.target.value)}
             />
-          
-            <Button 
-              variant="contained" 
-              color="primary" 
+
+            <Button
+              variant="contained"
               fullWidth
-              sx={{ mt: 3, color: "#fff", backgroundColor: "rgba(255, 94, 0, 1)" }}
+              sx={{ 
+                mt: 2, 
+                py: 1.5,
+                color: "white",
+                fontWeight: "bold",
+                backgroundColor: "#FA812F",
+                '&:hover': { backgroundColor: "#e06a1d" }
+              }}
               onClick={updateAmountsAndRates}
             >
-              Guardar Configuración
+              Guardar Cambios
             </Button>
 
-            <Button 
-              variant="contained" 
-              color="primary" 
-              fullWidth
-              sx={{ mt: 1 , color: "#fff", backgroundColor: "rgba(255, 94, 0, 1)" }}
-              onClick={initializeAmountsAndRates}
-            >
-              Inicializar montos y tarifas
-            </Button>
+            <Divider sx={{ my: 1 }}>Acciones Especiales</Divider>
+
+            <Stack direction="row" spacing={2}>
+              <Button
+                variant="outlined"
+                fullWidth
+                size="small"
+                sx={{ color: "#FA812F", borderColor: "#FA812F" }}
+                onClick={initializeAmountsAndRates}
+              >
+                Inicializar Tarifas
+              </Button>
+
+              <Button
+                variant="outlined"
+                fullWidth
+                size="small"
+                sx={{ color: "#FA812F", borderColor: "#FA812F" }}
+                onClick={initializeToolStates}
+              >
+                Inicializar Estados de Herramientas
+              </Button>
+            </Stack>
           </Stack>
         </Paper>
-      </Container>
-    </ThemeProvider>
-  );
-};
 
+      </Stack>
+    </Container>
+  </ThemeProvider>
+);
+};
 export default Configuration;

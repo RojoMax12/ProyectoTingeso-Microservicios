@@ -1,8 +1,8 @@
 
 import httpClient from "../http-commons"
 
-const create = data => {
-    return httpClient.post("/api/statetools", data)
+const create = () => {
+    return httpClient.post("/api/statetools/")
 
 }
 

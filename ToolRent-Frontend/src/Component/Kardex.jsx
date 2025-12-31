@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box, Typography, Paper, Stack, IconButton, Drawer, List, ListItem, ListItemButton,
     ListItemIcon, ListItemText, Button, Table, TableBody, TableCell, TableContainer,
@@ -135,15 +135,37 @@ const Kardex = () => {
 
 return (
     <>  
-        {/* Slidebar */}
+        {/* Capa de fondo fija que cubre toda la pantalla */}
+        <Box
+            sx={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                backgroundColor: "#FEF3E2",
+                zIndex: -1
+            }}
+        />
+
+        {/* Botón menú hamburguesa */}
         <IconButton
             color="inherit"
             onClick={() => setDrawerOpen(true)}
-            sx={{ position: "fixed", top: 16, left: 16, zIndex: 10, backgroundColor: "#FA812F", boxShadow: 3 , '&:hover': { backgroundColor: "#FA812F" }}}
+            sx={{ 
+                position: "fixed", 
+                top: 16, 
+                left: 16, 
+                zIndex: 1100, 
+                backgroundColor: "#FA812F", 
+                boxShadow: 3, 
+                '&:hover': { backgroundColor: "#FA812F" }
+            }}
         >
-            <MenuIcon />
+            <MenuIcon sx={{ color: "#FEF3E2" }} />
         </IconButton>
 
+        {/* Barra lateral (Drawer) */}
         <Drawer
             anchor="left"
             open={drawerOpen}
@@ -164,37 +186,27 @@ return (
                 ))}
             </List>
         </Drawer>
-        <Box
-            sx={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                width: "100vw",
-                height: "100vh",
-                backgroundColor: "#FEF3E2",
-                zIndex: -1
-            }}
-        />
 
+        {/* Contenedor externo con scroll natural */}
         <Box sx={{
-            minHeight: "100vh",
-            backgroundColor: "#FEF3E2",
+            backgroundColor: "transparent",
             py: 4,
+            pt: 10, 
             display: "flex",
-            alignItems: "flex-start", // <-- Cambio: de center a flex-start
-            pt: 8 // <-- Agregar padding top para el botón del menú
+            justifyContent: "center",
+            width: "100%"
         }}>
+            {/* ESTE ES EL BOX QUE ENSANCHAMOS */}
             <Box
                 sx={{
-                    maxWidth: 1100,
+                    maxWidth: 1500, // <--- Aumentado para ensanchar el contenido
+                    width: "95%",    // <--- Ocupa el 95% del ancho de la pantalla
                     mx: "auto",
-                    mt: 2,
-                    backgroundColor: "#ffffffff",
+                    backgroundColor: "#fff8f0", 
                     borderRadius: 4,
                     boxShadow: 6,
-                    p: 4,
+                    p: { xs: 2, md: 4 }, // Padding responsivo (menor en móviles)
                     border: "2px solid rgba(255, 94, 0, 0.2)",
-                    width: "100%" // <-- Agregar para mejor responsividad
                 }}
             >
                 <Typography
@@ -206,16 +218,11 @@ return (
                     Kardex
                 </Typography>
 
-                {/* Filtros alineados y ordenados */}
+                {/* Filtros */}
                 <Stack
                     direction="row"
                     spacing={2}
-                    sx={{
-                        mb: 3,
-                        flexWrap: "wrap",
-                        alignItems: "center",
-                        justifyContent: "flex-start"
-                    }}
+                    sx={{ mb: 3, flexWrap: "wrap", alignItems: "center", gap: 2 }}
                 >
                     <TextField
                         label="Fecha inicio"
@@ -223,11 +230,13 @@ return (
                         InputLabelProps={{ shrink: true }}
                         value={fechaInicio}
                         onChange={e => setFechaInicio(e.target.value)}
-                        sx={{ 
-                            minWidth: 160,
-                            '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                                filter: 'invert(45%) sepia(87%) saturate(2466%) hue-rotate(15deg) brightness(102%) contrast(104%)',
-                                cursor: 'pointer'
+                        sx={{
+                            minWidth: 200,
+                            // Selector para el icono del calendario
+                            "& input::-webkit-calendar-picker-indicator": {
+                                filter: "invert(42%) sepia(93%) saturate(3065%) hue-rotate(354deg) brightness(101%) contrast(106%)",
+                                cursor: "pointer",
+                                fontSize: "1.2rem" // Opcional: ajustar tamaño
                             }
                         }}
                     />
@@ -237,169 +246,105 @@ return (
                         InputLabelProps={{ shrink: true }}
                         value={fechaFin}
                         onChange={e => setFechaFin(e.target.value)}
-                        sx={{ 
-                            minWidth: 160,
-                            '& input[type="date"]::-webkit-calendar-picker-indicator': {
-                                filter: 'invert(45%) sepia(87%) saturate(2466%) hue-rotate(15deg) brightness(102%) contrast(104%)',
-                                cursor: 'pointer'
+                        sx={{
+                            minWidth: 200,
+                            // Selector para el icono del calendario
+                            "& input::-webkit-calendar-picker-indicator": {
+                                filter: "invert(42%) sepia(93%) saturate(3065%) hue-rotate(354deg) brightness(101%) contrast(106%)",
+                                cursor: "pointer",
+                                fontSize: "1.2rem" // Opcional: ajustar tamaño
                             }
                         }}
                     />
                     <Button
                         variant="contained"
-                        color="primary"
                         onClick={handleBuscar}
                         sx={{ 
+                            height: 56, // Misma altura que los TextFields
                             minWidth: 180,
                             backgroundColor: "rgba(255, 94, 0, 1)",
-                            '&:hover': {
-                                backgroundColor: "rgba(255, 94, 0, 0.8)"
-                            }
+                            '&:hover': { backgroundColor: "rgba(255, 94, 0, 0.8)" }
                         }}
                     >
                         Buscar por rango
                     </Button>
                 </Stack>
                 
-                <Stack spacing={2} direction="row" sx={{
-                        mb: 3,
-                        flexWrap: "wrap",
-                        alignItems: "center",
-                        justifyContent: "flex-start"
-                    }}>
+                <Stack spacing={2} direction="row" sx={{ mb: 4, flexWrap: "wrap", alignItems: "center", gap: 2 }}>
                     <TextField
                         label="Buscar por nombre de herramienta"
                         variant="outlined"
                         value={nombreHerramienta}
                         onChange={e => setNombreHerramienta(e.target.value)}
-                        sx={{ minWidth: 220 }}
+                        sx={{ flexGrow: 1, minWidth: 300 }} // Ocupa espacio disponible
                     />
                     <Button
                         variant="contained"
-                        color="primary"
                         onClick={handleBuscarPorNombre}
                         sx={{ 
-                            minWidth: 220,
+                            height: 56,
+                            minWidth: 250,
                             backgroundColor: "rgba(255, 94, 0, 1)",
-                            '&:hover': {
-                                backgroundColor: "rgba(255, 94, 0, 0.8)"
-                            }
+                            '&:hover': { backgroundColor: "rgba(255, 94, 0, 0.8)" }
                         }}
                     >
-                        Buscar por nombre de herramienta
+                        Buscar por nombre
                     </Button>
                 </Stack>
 
-                {/* TableContainer con scroll personalizado */}
+                {/* Tabla con scroll interno */}
                 <TableContainer 
                     component={Paper} 
                     sx={{ 
                         boxShadow: 3,
-                        maxHeight: 500, // <-- Altura máxima para activar scroll
-                        overflow: 'auto', // <-- Scroll automático
-                        '&::-webkit-scrollbar': { // <-- Personalización del scrollbar
-                            width: '10px',
-                            height: '10px', // Para scroll horizontal si es necesario
-                        },
-                        '&::-webkit-scrollbar-track': {
-                            backgroundColor: '#f1f1f1',
+                        maxHeight: 600, // Aumenté un poco el alto para aprovechar el ancho
+                        overflow: 'auto',
+                        '&::-webkit-scrollbar': { width: '10px' },
+                        '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1', borderRadius: '6px' },
+                        '&::-webkit-scrollbar-thumb': { 
+                            backgroundColor: 'rgba(255, 94, 0, 0.6)', 
                             borderRadius: '6px',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                            backgroundColor: 'rgba(255, 94, 0, 0.6)', // <-- Color naranja matching tu tema
-                            borderRadius: '6px',
-                            '&:hover': {
-                                backgroundColor: 'rgba(255, 94, 0, 0.8)',
-                            }
-                        },
-                        '&::-webkit-scrollbar-corner': {
-                            backgroundColor: '#f1f1f1',
+                            '&:hover': { backgroundColor: 'rgba(255, 94, 0, 0.8)' }
                         }
                     }}
                 >
-                    <Table stickyHeader>
+                    <Table stickyHeader aria-label="kardex table">
                         <TableHead>
                             <TableRow>
-                                <TableCell sx={{ 
-                                    color: "#fff", 
-                                    fontWeight: "bold",
-                                    backgroundColor: "rgba(255, 94, 0, 1)", // <-- Mantener color al hacer scroll
-                                    position: "sticky",
-                                    top: 0,
-                                    zIndex: 2
-                                }}>
-                                    ID</TableCell>
-
-                                <TableCell sx={{ 
-                                    color: "#fff", 
-                                    fontWeight: "bold",
-                                    backgroundColor: "rgba(255, 94, 0, 1)",
-                                    position: "sticky",
-                                    top: 0,
-                                    zIndex: 2
-                                }}>
-                                    Fecha</TableCell>
-                                <TableCell sx={{ 
-                                    color: "#fff", 
-                                    fontWeight: "bold",
-                                    backgroundColor: "rgba(255, 94, 0, 1)",
-                                    position: "sticky",
-                                    top: 0,
-                                    zIndex: 2
-                                }}
-                                >Estado de la herramienta</TableCell>
-                                <TableCell sx={{ 
-                                    color: "#fff", 
-                                    fontWeight: "bold",
-                                    backgroundColor: "rgba(255, 94, 0, 1)",
-                                    position: "sticky",
-                                    top: 0,
-                                    zIndex: 2
-                                }}>
-                                    Usuario</TableCell>
-                                <TableCell sx={{ 
-                                    color: "#fff", 
-                                    fontWeight: "bold",
-                                    backgroundColor: "rgba(255, 94, 0, 1)",
-                                    position: "sticky",
-                                    top: 0,
-                                    zIndex: 2
-                                }}>
-                                    Cantidad</TableCell>
-                                <TableCell sx={{ 
-                                    color: "#fff", 
-                                    fontWeight: "bold",
-                                    backgroundColor: "rgba(255, 94, 0, 1)",
-                                    position: "sticky",
-                                    top: 0,
-                                    zIndex: 2
-                                }}>
-                                    Nombre de la Herramienta</TableCell>
+                                {["ID", "Fecha", "Estado", "Usuario", "Cantidad", "Nombre de la Herramienta"].map((head) => (
+                                    <TableCell 
+                                        key={head}
+                                        sx={{ 
+                                            color: "#fff", 
+                                            fontWeight: "bold",
+                                            backgroundColor: "rgba(255, 94, 0, 1)",
+                                            position: "sticky",
+                                            top: 0,
+                                            zIndex: 2,
+                                            fontSize: '1rem'
+                                        }}
+                                    >
+                                        {head}
+                                    </TableCell>
+                                ))}
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {kardexList.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} align="center"> 
-                                        <Typography 
-                                            color="text.secondary"
-                                            sx={{ py: 4, fontStyle: 'italic' }}
-                                        >
+                                        <Typography color="text.secondary" sx={{ py: 6, fontStyle: 'italic' }}>
                                             No hay registros en el Kardex.
                                         </Typography>
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                kardexList.map((kardex, index) => (
+                                kardexList.map((kardex) => (
                                     <TableRow 
                                         key={kardex.id}
                                         sx={{
-                                            '&:nth-of-type(odd)': { // <-- Filas alternas para mejor legibilidad
-                                                backgroundColor: '#fafafa',
-                                            },
-                                            '&:hover': { // <-- Efecto hover
-                                                backgroundColor: 'rgba(255, 94, 0, 0.1)',
-                                            }
+                                            '&:nth-of-type(odd)': { backgroundColor: '#fafafa' },
+                                            '&:hover': { backgroundColor: 'rgba(255, 94, 0, 0.05)' }
                                         }}
                                     >
                                         <TableCell>{kardex.id}</TableCell>
@@ -419,5 +364,4 @@ return (
     </>
 );
 };
-
 export default Kardex;

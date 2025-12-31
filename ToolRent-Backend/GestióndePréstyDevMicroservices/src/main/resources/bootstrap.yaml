@@ -1,4 +1,4 @@
-zspring:
+spring:
   application:
     name: m2-prestydev-service
   cloud:

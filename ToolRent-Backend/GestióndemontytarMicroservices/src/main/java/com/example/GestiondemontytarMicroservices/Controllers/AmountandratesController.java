@@ -13,7 +13,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/AmountandRates")
-@CrossOrigin("*")
 public class AmountandratesController {
 
     @Autowired
@@ -33,14 +32,14 @@ public class AmountandratesController {
         return ResponseEntity.ok(newamout);
     }
 
-    @PreAuthorize(("hasAnyRole('ADMIN')"))
+    @PreAuthorize(("hasAnyRole('ADMIN', 'USER')"))
     @GetMapping("/")
     public ResponseEntity<List<AmountsandratesEntity>> getAmountandrates(){
         List<AmountsandratesEntity> amountsandratesEntities = amountsandratesServices.getAllAmountsAndRates();
         return ResponseEntity.ok(amountsandratesEntities);
     }
 
-    @PreAuthorize(("hasAnyRole('ADMIN')"))
+    @PreAuthorize(("hasAnyRole('ADMIN', 'USER')"))
     @GetMapping("/{id}")
     public ResponseEntity<Optional<AmountsandratesEntity>> getAmountandratesById(@PathVariable Long id){
         Optional<AmountsandratesEntity> amountsandratesEntities = amountsandratesServices.getAmountsAndRatesbyId(id);

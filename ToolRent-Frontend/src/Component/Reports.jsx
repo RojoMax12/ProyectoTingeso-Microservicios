@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import {
   ThemeProvider, CssBaseline, Typography, Box, Paper, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Button, Modal, Container, Drawer, List,  ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton} from "@mui/material";
+  TableContainer, TableHead, TableRow, Button, Modal, Container, Drawer, List, 
+  ListItem, ListItemButton, ListItemIcon, ListItemText, IconButton, Stack, TextField, Checkbox
+} from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { useKeycloak } from "@react-keycloak/web";
 import HomeIcon from "@mui/icons-material/Home";
@@ -19,6 +21,7 @@ import LoanToolsServices from "../Services/LoanToolsServices";
 import ClientServices from "../Services/ClientServices";
 import ToolServices from "../Services/ToolServices";
 import MenuIcon from "@mui/icons-material/Menu";
+import DeleteIcon from '@mui/icons-material/Delete'; // Importar icono
 
 const theme = createTheme({
   palette: {
@@ -27,692 +30,327 @@ const theme = createTheme({
 });
 
 const Reports = () => {
-
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [openModal, setOpenModal] = useState(false); // Estado para abrir/cerrar el modal
-  const [selectedReport, setSelectedReport] = useState(null); // Estado para los detalles del reporte seleccionado
-  const [dataDetails, setDataDetails] = useState(null); // Estado para almacenar los detalles del reporte
-    // Modal de filtro por fecha
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [dataDetails, setDataDetails] = useState(null);
   const [dateModalOpen, setDateModalOpen] = useState(false);
-  const [dateFilterType, setDateFilterType] = useState(""); // "loan" | "late" | "top"
+  const [dateFilterType, setDateFilterType] = useState("");
   const [initDate, setInitDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
-  // Estados de los reportes
   const [activeLoans, setActiveLoans] = useState([]);
   const [clientsWithDelays, setClientsWithDelays] = useState([]);
   const [topTools, setTopTools] = useState([]);
   const [isFiltered, setIsFiltered] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]); // Estado para las palomitas
 
-
-  // ADMIN CHECK
   const { keycloak } = useKeycloak();
   const isAdmin = keycloak?.tokenParsed?.realm_access?.roles?.includes("ADMIN");
 
   const sidebarOptions = [
-          { text: "Inicio", icon: <HomeIcon />, path: "/" },
-          { text: "Herramientas", icon: <BuildIcon />, path: "/ToolList" },
-          { text: "Agregar Herramienta", icon: <LibraryAddIcon />, path: "/AddTools" },
-          { text: "Ver Kardex", icon: <AssessmentIcon />, path: "/Kardex" },
-          { text: "Registrar Cliente", icon: <PersonAddAltIcon />, path: "/RegisterClient" },
-          { text: "Clientes", icon: <ContactsIcon />, path: "/ClientList" },
-          { text: "Reportes", icon: <ReportIcon />, path: "/Reports" },
-          ...(isAdmin ? [{ text: "Configuraciones", icon: <AdminPanelSettingsIcon />, path: "/Configuration" }] : [])
-      ];
-  
+    { text: "Inicio", icon: <HomeIcon />, path: "/" },
+    { text: "Herramientas", icon: <BuildIcon />, path: "/ToolList" },
+    { text: "Agregar Herramienta", icon: <LibraryAddIcon />, path: "/AddTools" },
+    { text: "Ver Kardex", icon: <AssessmentIcon />, path: "/Kardex" },
+    { text: "Registrar Cliente", icon: <PersonAddAltIcon />, path: "/RegisterClient" },
+    { text: "Clientes", icon: <ContactsIcon />, path: "/ClientList" },
+    { text: "Reportes", icon: <ReportIcon />, path: "/Reports" },
+    ...(isAdmin ? [{ text: "Configuraciones", icon: <AdminPanelSettingsIcon />, path: "/Configuration" }] : [])
+  ];
 
-  // Mostrar los reportes de préstamos activos
   const showActiveLoansReport = () => {
-    ReportsService.getallReportsLoans()
-      .then((response) => {
-        const reports = response.data || [];
-        setActiveLoans(reports);
-      })
-      .catch((error) => {
-        console.error("Error en la solicitud de reportes", error);
-      });
+    ReportsService.getallReportsLoans().then(res => setActiveLoans(res.data || [])).catch(console.error);
   };
 
-  // Mostrar los reportes de clientes con atraso
   const showClientsLateReport = () => {
-    ReportsService.getallReportsClientLate()
-      .then((response) => {
-        const reports = response.data || [];
-        setClientsWithDelays(reports);
-      })
-      .catch((error) => {
-        console.error("Error al obtener los reportes de clientes con atraso", error);
-      });
+    ReportsService.getallReportsClientLate().then(res => setClientsWithDelays(res.data || [])).catch(console.error);
   };
 
-  // Mostrar los reportes de las herramientas más prestadas
   const showTopToolsReport = () => {
-    ReportsService.getTopToolsReport()
-      .then((response) => {
-        setTopTools(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching top tools report:", error);
-      });
+    ReportsService.getTopToolsReport().then(res => setTopTools(res.data || [])).catch(console.error);
   };
 
-const generatereportActiveLoan = () => { 
-    ReportsService.createLoanReport().then(() => {
-        showActiveLoansReport(); // 🔥 refresco automático
-        alert("Reporte generado correctamente");
-    });
-}
-
-const generatereportClientLate = () => { 
-    ReportsService.createClientLateReport().then(() => {
-        showClientsLateReport(); // 🔥 refresco automático
-        alert("Reporte generado correctamente");
-    });
-}
-
-const generatereportTopTools = () => { 
-    ReportsService.createTopToolsReport().then(() => {
-        showTopToolsReport(); // 🔥 refresco automático
-        alert("Reporte generado correctamente");
-    });
-}
- 
-  // Cargar los reportes al montar el componente
   useEffect(() => {
+    console.log("IDs seleccionados actualmente:", selectedIds);
     showActiveLoansReport();
     showClientsLateReport();
     showTopToolsReport();
-  }, []);
+  }, [], [selectedIds]);
 
-  // Función para obtener los detalles de los reportes de préstamos activos
-  const getselectedDataActiveLoan = (selectedid) => {
-    DataReportServices.getdataReportByIdreport(selectedid)
-      .then(async (response) => {
-        const dataReport = response.data;
-        if (Array.isArray(dataReport)) {
-          const loanDetails = await Promise.all(
-            dataReport.map(async (r) => {
-              if (r.idLoanTool) {
-                const loanResponse = await LoanToolsServices.getid(r.idLoanTool);
-                const clientResponse = await ClientServices.getByid(loanResponse.data.clientid);
-                const toolResponse = await ToolServices.getid(loanResponse.data.toolid);
-
-                return {
-                  loanstartdate: loanResponse.data.initiallenddate,
-                  loanfinaldate: loanResponse.data.finalreturndate,
-                  clientname: clientResponse.data.name,
-                  toolname: toolResponse.data.name,
-                  reportDate: r.date,
-                };
-              }
-            })
-          );
-          setDataDetails(loanDetails.filter((loan) => loan !== null));
-        }
-      })
-      .catch((error) => {
-        console.error("Error al obtener los detalles del reporte de préstamos activos", error);
-      });
-  };
-
-  // Función para obtener los detalles de los reportes de clientes con atraso
-  const getselectedDataClientsLateReport = (selectedid) => {
-    DataReportServices.getdataReportByIdreport(selectedid)
-      .then((response) => {
-        setDataDetails(response.data);
-      })
-      .catch((error) => {
-        console.error("Error al obtener los detalles de clientes con atraso", error);
-      });
-  };
-
-  // Función para obtener los detalles de los reportes de herramientas más prestadas
-  const getselectedTopToolsReport = (selectedid) => {
-    DataReportServices.getdataReportByIdreport(selectedid)
-      .then(async (response) => {
-        const datareport = response.data;
-        console.log("reportes", datareport)
-        if (Array.isArray(datareport)) {
-          const topToolsDetails = await Promise.all(
-            datareport.map(async (r) => {
-              if (r.idTool) {
-                const toolResponse = await ToolServices.getid(r.idTool);
-                return {
-                  toolname: toolResponse.data.name,
-                  number_of_times_borrowed: r.number_of_times_borrowed
-
-                };
-              }
-            })
-          );
-          setDataDetails(topToolsDetails.filter((tool) => tool !== null));
-        }
-      })
-      .catch((error) => {
-        console.error("Error al obtener los detalles de herramientas más prestadas", error);
-      });
-  };
-
-  // Abrir modal con los detalles del reporte
   const handleOpenModal = (report) => {
-    setSelectedReport(report); // Guardar el reporte seleccionado
-    setOpenModal(true); // Abrir el modal
-
-    // Dependiendo del tipo de reporte, obtener los detalles
-    if (report.name === "ReportLoanTools") {
-      getselectedDataActiveLoan(report.id);
-    } else if (report.name === "ReportClientLoanLate") {
-      getselectedDataClientsLateReport(report.id);
-    } else if (report.name === "ReportTopTools") {
-      getselectedTopToolsReport(report.id);
-    }
+    setSelectedReport(report);
+    setOpenModal(true);
+    if (report.name === "ReportLoanTools") getselectedDataActiveLoan(report.id);
+    else if (report.name === "ReportClientLoanLate") getselectedDataClientsLateReport(report.id);
+    else if (report.name === "ReportTopTools") getselectedTopToolsReport(report.id);
   };
 
-  // Cerrar modal
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setSelectedReport(null);
-    setDataDetails(null);
+  // ... (Tus funciones generatereport y getselectedData se mantienen igual)
+  const generatereportActiveLoan = () => ReportsService.createLoanReport().then(() => { showActiveLoansReport(); alert("Generado"); });
+  const generatereportClientLate = () => ReportsService.createClientLateReport().then(() => { showClientsLateReport(); alert("Generado"); });
+  const generatereportTopTools = () => ReportsService.createTopToolsReport().then(() => { showTopToolsReport(); alert("Generado"); });
+
+  const getselectedDataActiveLoan = (id) => {
+    DataReportServices.getdataReportByIdreport(id).then(async (response) => {
+      const dataReport = response.data;
+      if (Array.isArray(dataReport)) {
+        const details = await Promise.all(dataReport.map(async (r) => {
+          const loanRes = await LoanToolsServices.getid(r.idLoanTool);
+          const clientRes = await ClientServices.getByid(loanRes.data.clientid);
+          const toolRes = await ToolServices.getid(loanRes.data.toolid);
+          return {
+            loanstartdate: loanRes.data.initiallenddate,
+            loanfinaldate: loanRes.data.finalreturndate,
+            clientname: clientRes.data.name,
+            toolname: toolRes.data.name,
+          };
+        }));
+        setDataDetails(details);
+      }
+    });
+  };
+
+  const getselectedDataClientsLateReport = (id) => DataReportServices.getdataReportByIdreport(id).then(res => setDataDetails(res.data));
+
+  const getselectedTopToolsReport = (id) => {
+    DataReportServices.getdataReportByIdreport(id).then(async (response) => {
+      const dataReport = response.data;
+      if (Array.isArray(dataReport)) {
+        const details = await Promise.all(dataReport.map(async (r) => {
+          const toolRes = await ToolServices.getid(r.idTool);
+          return { toolname: toolRes.data.name, number_of_times_borrowed: r.number_of_times_borrowed };
+        }));
+        setDataDetails(details);
+      }
+    });
   };
 
   const applyDateFilter = () => {
-  if (!initDate || !endDate) {
-    alert("Debe seleccionar ambas fechas");
-    return;
-  }
-
-  ReportsService.reportdate(initDate, endDate)
-    .then(response => {
-      const filtered = response.data || [];
-
-      if (dateFilterType === "loan") {
-        setActiveLoans(filtered.filter(r => r.name === "ReportLoanTools"));
-      }
-
-      if (dateFilterType === "late") {
-        setClientsWithDelays(filtered.filter(r => r.name === "ReportClientLoanLate"));
-      }
-
-      if (dateFilterType === "top") {
-        setTopTools(filtered.filter(r => r.name === "ReportTopTools"));
-      }
-
-      setIsFiltered(true);   // 🔥 activa indicador de filtro
+    if (!initDate || !endDate) return alert("Seleccione fechas");
+    ReportsService.reportdate(initDate, endDate).then(res => {
+      const filtered = res.data || [];
+      if (dateFilterType === "loan") setActiveLoans(filtered.filter(r => r.name === "ReportLoanTools"));
+      if (dateFilterType === "late") setClientsWithDelays(filtered.filter(r => r.name === "ReportClientLoanLate"));
+      if (dateFilterType === "top") setTopTools(filtered.filter(r => r.name === "ReportTopTools"));
+      setIsFiltered(true);
       setDateModalOpen(false);
-    })
-    .catch(err => console.error(err));
-};
+    });
+  };
 
-const removeFilter = () => {
-    if (dateFilterType === "loan") {
-      showActiveLoansReport();
-    }
-    if (dateFilterType === "late") {
-      showClientsLateReport();
-    }
-    if (dateFilterType === "top") {
-      showTopToolsReport();
-    }
-
-    setInitDate("");
-    setEndDate("");
+  const removeFilter = () => {
+    if (dateFilterType === "loan") showActiveLoansReport();
+    if (dateFilterType === "late") showClientsLateReport();
+    if (dateFilterType === "top") showTopToolsReport();
     setIsFiltered(false);
     setDateModalOpen(false);
   };
 
+  const handleCloseModal = () => { setOpenModal(false); setDataDetails(null); };
 
+const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
 
+    if (window.confirm(`¿Estás seguro de eliminar los ${selectedIds.length} reportes seleccionados?`)) {
 
-  // Modal de detalles
-  const renderReportDetails = () => {
-  if (dataDetails) {
-    if (selectedReport.name === "ReportLoanTools") {
-      return (
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: "bold", color: "rgba(255,94,0,1)", mb: 2 }}>
-            Detalles del Reporte de Préstamos Activos
-          </Typography>
-          {dataDetails.map((detail, index) => (
-            <Paper key={index} sx={{ p: 2, mb: 2, borderRadius: 2, boxShadow: 2 }}>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                <strong>Cliente:</strong> {detail.clientname}
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                <strong>Herramienta:</strong> {detail.toolname}
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                <strong>Fecha de Inicio:</strong> {detail.loanstartdate}
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                <strong>Fecha de Finalización:</strong> {detail.loanfinaldate}
-              </Typography>
-            </Paper>
-          ))}
-        </Box>
-      );
-    } else if (selectedReport.name === "ReportTopTools") {
-      return (
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: "bold", color: "rgba(255,94,0,1)", mb: 2 }}>
-            Detalles del Reporte de Herramientas Más Prestadas
-          </Typography>
-          {dataDetails.map((detail, index) => (
-            <Paper key={index} sx={{ p: 2, mb: 2, borderRadius: 2, boxShadow: 2 }}>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                <strong>Herramienta:</strong> {detail.toolname}
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                <strong>Cantidad:</strong> {detail.number_of_times_borrowed}
-              </Typography>
-            </Paper>
-          ))}
-        </Box>
-      );
+      console.log("Iniciando eliminación masiva. Lista de IDs:", selectedIds);
+        
+        // Enviamos directamente el array de números [1, 2, 5, ...]
+        ReportsService.deleteReportsById(selectedIds)
+            .then(() => {
+                alert("Reportes eliminados con éxito");
+                
+                // 1. Limpiar la selección
+                setSelectedIds([]); 
+                
+                // 2. Refrescar las tablas llamando a tus funciones de carga
+                showActiveLoansReport();
+                showClientsLateReport();
+                showTopToolsReport();
+            })
+            .catch((error) => {
+                console.error("Error en la eliminación masiva:", error);
+                alert("No se pudieron eliminar algunos reportes. Verifique la consola.");
+            });
     }
-  }
-  return <Typography variant="body1" sx={{ fontStyle: "italic", color: "rgba(0,0,0,0.6)" }}>Cargando detalles...</Typography>;
 };
 
+  const handleSelectOne = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllInSection = (data) => {
+    const sectionIds = data.map(r => r.id);
+    const allSelected = sectionIds.every(id => selectedIds.includes(id));
+    
+    if (allSelected) {
+      setSelectedIds(prev => prev.filter(id => !sectionIds.includes(id)));
+    } else {
+      setSelectedIds(prev => [...new Set([...prev, ...sectionIds])]);
+    }
+  };
+
+  const renderReportDetails = () => {
+    if (!dataDetails) return <Typography sx={{ p: 2 }}>Cargando...</Typography>;
+    return (
+      <Box sx={{ maxHeight: '60vh', overflowY: 'auto', p: 1 }}>
+        {dataDetails.map((detail, index) => (
+          <Paper key={index} sx={{ p: 2, mb: 2, backgroundColor: "#FEF3E2", border: '1px solid rgba(255,94,0,0.2)' }}>
+            {selectedReport.name === "ReportLoanTools" ? (
+              <>
+                <Typography variant="body2"><strong>Cliente:</strong> {detail.clientname}</Typography>
+                <Typography variant="body2"><strong>Herramienta:</strong> {detail.toolname}</Typography>
+                <Typography variant="body2"><strong>Devolución:</strong> {detail.loanfinaldate}</Typography>
+              </>
+            ) : (
+              <>
+                <Typography variant="body2"><strong>Herramienta:</strong> {detail.toolname}</Typography>
+                <Typography variant="body2"><strong>Préstamos:</strong> {detail.number_of_times_borrowed}</Typography>
+              </>
+            )}
+          </Paper>
+        ))}
+      </Box>
+    );
+  };
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      {/* Fondo Fijo */}
+      <Box sx={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "#FEF3E2", zIndex: -1 }} />
 
-      <Box sx={{ p: 4, minHeight: "100vh" }}>
-                      {/* SlideBar*/}
-                      <IconButton
-                          color="inherit"
-                          onClick={() => setDrawerOpen(true)}
-                          sx={{ 
-                              position: "fixed", 
-                              top: 16, 
-                              left: 16, 
-                              zIndex: 10, 
-                              backgroundColor: "#FA812F", 
-                              boxShadow: 3,
-                              '&:hover': { backgroundColor: "#FA812F" }
-                          }}
-                      >
-                          <MenuIcon sx={{ color: "#FEF3E2" }} />
-                      </IconButton>
-
-                    <Drawer
-                          open={drawerOpen}
-                          onClose={() => setDrawerOpen(false)}
-                          variant="temporary"
-                          sx={{
-                              [`& .MuiDrawer-paper`]: { 
-                                  width: 240, 
-                                  boxSizing: "border-box", 
-                                  backgroundColor: "#FEF3E2" 
-                              }
-                          }}
-                      >
-                          <List>
-                              {sidebarOptions.map((option) => (
-                                  <ListItem key={option.text} disablePadding>
-                                      <ListItemButton 
-                                          onClick={() => { 
-                                              navigate(option.path); 
-                                              setDrawerOpen(false); 
-                                          }}
-                                          sx={{
-                                              '&:hover': {
-                                                  backgroundColor: 'rgba(255, 94, 0, 0.1)',
-                                              },
-                                              borderRadius: 1,
-                                              mx: 1,
-                                              my: 0.5
-                                          }}
-                                      >
-                                          <ListItemIcon sx={{ color: "rgba(255, 94, 0, 1)", minWidth: 40 }}>
-                                              {option.icon}
-                                          </ListItemIcon>
-                                          <ListItemText 
-                                              primary={option.text}
-                                              sx={{
-                                                  '& .MuiListItemText-primary': {
-                                                      fontWeight: 500,
-                                                      fontSize: '0.95rem'
-                                                  }
-                                              }}
-                                          />
-                                      </ListItemButton>
-                                  </ListItem>
-                              ))}
-                          </List>
-                      </Drawer>
-
-
-        {/*Label de todo el compenente de los reportes */}          
-      <Typography variant="h3" align="center" sx={{ fontWeight: "bold", color: "rgba(255,94,0,1)", mb: 4 }}>
-        📊 Centro de Reportes
-      </Typography>
-      <Container sx={{ mt: 10, mb: 5 }}>
-        {/* Reportes: Préstamos Activos */}
-        <Paper sx={{ p: 4, mb: 5, borderRadius: 4, backgroundColor: "#fff", boxShadow: "0 4px 18px rgba(255,94,0,0.15)" }}>
-          <Typography variant="h6" sx={{ fontWeight: "bold", color: "rgba(255,94,0,1)", mb: 3 }}>
-            📋 Préstamos Activos ({activeLoans.length})
-
-            <Button
-              onClick={() => { setDateFilterType("loan"); setDateModalOpen(true); }}
-              sx={{ 
-                backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                color: "#fff",  // Texto blanco
-                padding: "6px 12px",  // Ajusta el tamaño del botón
-                fontWeight: "bold",  // Establece el peso de la fuente
-                fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                borderRadius: 2,  // Borde redondeado
-                "&:hover": {
-                  backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                },
-                translate: "9px"
-              }}
-            >
-              Filtrar por fecha
-            </Button>
-
-            <Button 
-            onClick = {() => generatereportActiveLoan()} 
-            sx={{
-                backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                color: "#fff",  // Texto blanco
-                padding: "6px 12px",  // Ajusta el tamaño del botón
-                fontWeight: "bold",  // Establece el peso de la fuente
-                fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                borderRadius: 2,  // Borde redondeado
-                "&:hover": {
-                  backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                },
-                translate: "12px"
-              }}>
-
-            Generar reporte
-            </Button>
-          </Typography>
-          
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Fecha Reporte</TableCell>
-                  <TableCell>Tipo Reporte</TableCell>
-                  <TableCell>Acción</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {activeLoans.map((loan, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{loan.date}</TableCell>
-                    <TableCell>Préstamos Activos</TableCell>
-                    <TableCell>
-                      <Button onClick={() => handleOpenModal(loan)}
-                      sx={{
-                        backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                        color: "#fff",  // Texto blanco
-                        padding: "6px 12px",  // Ajusta el tamaño del botón
-                        fontWeight: "bold",  // Establece el peso de la fuente
-                        fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                        borderRadius: 2,  // Borde redondeado
-                        "&:hover": {
-                          backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                        }
-                        
-                      }}>
-                      Ver detalles</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-
-        {/* Reportes: Clientes con Atraso */}
-        <Paper sx={{ p: 4, mb: 5, borderRadius: 4, backgroundColor: "#fff", boxShadow: "0 4px 18px rgba(255,94,0,0.15)" }}>
-          <Typography variant="h6" sx={{ fontWeight: "bold", color: "rgba(255,94,0,1)", mb: 3 }}>
-            ⚠ Clientes con Atraso ({clientsWithDelays.length})
-
-            <Button
-              onClick={() => { setDateFilterType("late"); setDateModalOpen(true); }}
-              sx={{
-                backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                color: "#fff",  // Texto blanco
-                padding: "6px 12px",  // Ajusta el tamaño del botón
-                fontWeight: "bold",  // Establece el peso de la fuente
-                fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                borderRadius: 2,  // Borde redondeado
-                "&:hover": {
-                  backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                },
-                translate: "9px"
-               }}
-            >
-              Filtrar por fecha
-            </Button>
-
-            <Button 
-            onClick = {() => generatereportClientLate()} 
-            sx={{
-                backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                color: "#fff",  // Texto blanco
-                padding: "6px 12px",  // Ajusta el tamaño del botón
-                fontWeight: "bold",  // Establece el peso de la fuente
-                fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                borderRadius: 2,  // Borde redondeado
-                "&:hover": {
-                  backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                },
-                translate: "12px"
-              }}>
-
-            Generar reporte
-            </Button>
-          </Typography>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Fecha Reporte</TableCell>
-                  <TableCell>Tipo Reporte</TableCell>
-                  <TableCell>Acción</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {clientsWithDelays.map((client, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{client.date}</TableCell>
-                    <TableCell>Clientes con Atraso</TableCell>
-                    <TableCell>
-                      <Button onClick={() => handleOpenModal(client)} 
-                        sx={{
-                            backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                            color: "#fff",  // Texto blanco
-                            padding: "6px 12px",  // Ajusta el tamaño del botón
-                            fontWeight: "bold",  // Establece el peso de la fuente
-                            fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                            borderRadius: 2,  // Borde redondeado
-                            "&:hover": {
-                              backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                            },
-                            translate: "12px"
-                          }}
-                        >Ver detalles</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-
-        {/* Reportes: Herramientas Más Prestadas */}
-        <Paper sx={{ p: 4, mb: 5, borderRadius: 4, backgroundColor: "#fff", boxShadow: "0 4px 18px rgba(255,94,0,0.15)" }}>
-          <Typography variant="h6" sx={{ fontWeight: "bold", color: "rgba(255,94,0,1)", mb: 3 }}>
-            🏆 Herramientas Más Prestadas ({topTools.length})
-
-            <Button
-              onClick={() => { setDateFilterType("top"); setDateModalOpen(true); }}
-              sx={{ 
-                backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                color: "#fff",  // Texto blanco
-                padding: "6px 12px",  // Ajusta el tamaño del botón
-                fontWeight: "bold",  // Establece el peso de la fuente
-                fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                borderRadius: 2,  // Borde redondeado
-                "&:hover": {
-                  backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                },
-                translate: "9px"
-               }}
-            >
-              Filtrar por fecha
-            </Button>
-
-            {/* Usando el componente Button de Material-UI */}
-            <Button
-              onClick={() => generatereportTopTools()}
-              sx={{
-                backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                color: "#fff",  // Texto blanco
-                padding: "6px 12px",  // Ajusta el tamaño del botón
-                fontWeight: "bold",  // Establece el peso de la fuente
-                fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                borderRadius: 2,  // Borde redondeado
-                "&:hover": {
-                  backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                },
-                translate: "12px"
-              }}
-            >
-              Generar reporte
-            </Button>
-          </Typography>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Fecha Reporte</TableCell>
-                  <TableCell>Tipo Reporte</TableCell>
-                  <TableCell>Acción</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {topTools.map((tool, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{tool.date}</TableCell>
-                    <TableCell>Herramientas Más Prestadas</TableCell>
-                    <TableCell>
-                      <Button onClick={() => handleOpenModal(tool)} sx={{
-                          backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                          color: "#fff",  // Texto blanco
-                          padding: "6px 12px",  // Ajusta el tamaño del botón
-                          fontWeight: "bold",  // Establece el peso de la fuente
-                          fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                          borderRadius: 2,  // Borde redondeado
-                          "&:hover": {
-                            backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                          },
-                          translate: "12px"
-                        }}>
-                          Ver detalles
-                        </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      </Container>
-
-      {/* Modal de detalles */}
-      <Modal open={openModal} onClose={handleCloseModal}>
-        <Box sx={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: 400,
-          backgroundColor: "white",
-          padding: 3,
-          boxShadow: 24,
-          borderRadius: 2,
-        }}>
-          {renderReportDetails()}
-          <Button onClick={handleCloseModal} sx={{ backgroundColor: "rgba(255,94,0,1)" }}>
-            Cerrar
+      {/* Botón de Borrado Masivo Flotante (Solo aparece si hay seleccionados) */}
+      {selectedIds.length > 0 && (
+        <Box sx={{ position: 'fixed', bottom: 32, right: 32, zIndex: 2000 }}>
+          <Button 
+            variant="contained" 
+            color="error" 
+            size="large"
+            startIcon={<DeleteIcon />}
+            onClick={handleDeleteSelected}
+            sx={{ 
+              borderRadius: '50px', px: 4, py: 1.5, boxShadow: '0px 4px 20px rgba(0,0,0,0.3)',
+              textTransform: 'none', fontWeight: 'bold' 
+            }}
+          >
+            Eliminar seleccionados ({selectedIds.length})
           </Button>
         </Box>
+      )}
+
+      {/* Menu / Drawer */}
+      <IconButton onClick={() => setDrawerOpen(true)} sx={{ position: "fixed", top: 16, left: 16, zIndex: 1100, backgroundColor: "#FA812F", color: "white", "&:hover": { backgroundColor: "#FA812F" } }}>
+        <MenuIcon />
+      </IconButton>
+      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} sx={{ [`& .MuiDrawer-paper`]: { width: 240, backgroundColor: "#FEF3E2" } }}>
+        <List>
+          {sidebarOptions.map((option) => (
+            <ListItem key={option.text} disablePadding>
+              <ListItemButton onClick={() => { navigate(option.path); setDrawerOpen(false); }}>
+                <ListItemIcon sx={{ color: "#FA812F" }}>{option.icon}</ListItemIcon>
+                <ListItemText primary={option.text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Drawer>
+
+      <Container sx={{ pt: 10, pb: 5 }}>
+        <Typography variant="h3" align="center" sx={{ fontWeight: "bold", color: "#FA812F", mb: 6 }}>
+          📊 Centro de Reportes
+        </Typography>
+
+        {[ 
+          { title: "Préstamos Activos", data: activeLoans, type: "loan", gen: generatereportActiveLoan },
+          { title: "Clientes con Atraso", data: clientsWithDelays, type: "late", gen: generatereportClientLate },
+          { title: "Herramientas Más Prestadas", data: topTools, type: "top", gen: generatereportTopTools }
+        ].map((section, idx) => (
+          <Paper key={idx} sx={{ p: 4, mb: 6, borderRadius: 4, backgroundColor: "#fff8f0", border: "2px solid rgba(255, 94, 0, 0.1)", boxShadow: 4 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
+              <Typography variant="h6" sx={{ fontWeight: "bold", color: "#FA812F" }}>
+                {section.title} ({section.data.length})
+              </Typography>
+              <Stack direction="row" spacing={2}>
+                <Button variant="contained" onClick={() => { setDateFilterType(section.type); setDateModalOpen(true); }} sx={{ backgroundColor: "#FA812F", "&:hover": { backgroundColor: "#e06a1d" } }}>
+                  Filtrar
+                </Button>
+                <Button variant="outlined" onClick={section.gen} sx={{ borderColor: "#FA812F", color: "#FA812F", "&:hover": { borderColor: "#e06a1d" } }}>
+                  Generar
+                </Button>
+              </Stack>
+            </Stack>
+
+            <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    {/* Nueva celda para Seleccionar Todo en esta sección */}
+                    <TableCell sx={{ backgroundColor: "#FA812F", width: 50 }}>
+                      <Checkbox 
+                        sx={{ color: "white", '&.Mui-checked': { color: 'white' }, '&.MuiCheckbox-indeterminate': { color: 'white' } }}
+                        indeterminate={section.data.some(r => selectedIds.includes(r.id)) && !section.data.every(r => selectedIds.includes(r.id))}
+                        checked={section.data.length > 0 && section.data.every(r => selectedIds.includes(r.id))}
+                        onChange={() => handleSelectAllInSection(section.data)}
+                      />
+                    </TableCell>
+                    {["Fecha Reporte", "Tipo", "Acción"].map(h => (
+                      <TableCell key={h} sx={{ backgroundColor: "#FA812F", color: "white", fontWeight: "bold" }}>{h}</TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {section.data.map((report, i) => (
+                    <TableRow key={report.id || i} hover selected={selectedIds.includes(report.id)}>
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedIds.includes(report.id)}
+                          onChange={() => handleSelectOne(report.id)}
+                          sx={{ color: "#FA812F", '&.Mui-checked': { color: '#FA812F' } }}
+                        />
+                      </TableCell>
+                      <TableCell>{report.date}</TableCell>
+                      <TableCell>{section.title}</TableCell>
+                      <TableCell>
+                        <Button size="small" variant="contained" onClick={() => handleOpenModal(report)} sx={{ backgroundColor: "#FA812F" }}>Ver Detalles</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {section.data.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center" sx={{ py: 3 }}>No hay reportes disponibles</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        ))}
+      </Container>
+
+      {/* Modales - Se mantienen igual */}
+      <Modal open={openModal} onClose={handleCloseModal}>
+        <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: {xs: '90%', sm: 500}, backgroundColor: "white", p: 4, borderRadius: 3, boxShadow: 24 }}>
+          <Typography variant="h6" sx={{ color: "#FA812F", fontWeight: "bold", mb: 2 }}>Detalles del Reporte</Typography>
+          {renderReportDetails()}
+          <Button fullWidth onClick={handleCloseModal} sx={{ mt: 3, backgroundColor: "#FA812F", color: "white" }}>Cerrar</Button>
+        </Box>
       </Modal>
-    </Box>
 
-    <Modal open={dateModalOpen} onClose={() => setDateModalOpen(false)}>
-  <Box sx={{
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      width: 350,
-      backgroundColor: "white",
-      p: 3,
-      borderRadius: 2,
-      boxShadow: 24,
-  }}>
-      <Typography variant="h6" sx={{ mb: 2, color: "rgba(255,94,0,1)", fontWeight: "bold" }}>
-          Filtrar por Fecha
-      </Typography>
-
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <input type="date" value={initDate} onChange={(e) => setInitDate(e.target.value)} />
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-
-          <Button
-              onClick={applyDateFilter}
-              sx={{ backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                          color: "#fff",  // Texto blanco
-                          padding: "6px 12px",  // Ajusta el tamaño del botón
-                          fontWeight: "bold",  // Establece el peso de la fuente
-                          fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                          borderRadius: 2,  // Borde redondeado
-                          "&:hover": {
-                            backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                          },}}
-          >
-              Aplicar filtro
-          </Button>
-
-          {isFiltered && (
-            <Button
-                onClick={removeFilter}
-                sx={{ backgroundColor: "rgba(255,94,0,1)",  // Color de fondo naranja
-                          color: "#fff",  // Texto blanco
-                          padding: "6px 12px",  // Ajusta el tamaño del botón
-                          fontWeight: "bold",  // Establece el peso de la fuente
-                          fontSize: "0.875rem",  // Ajusta el tamaño de la fuente
-                          borderRadius: 2,  // Borde redondeado
-                          "&:hover": {
-                            backgroundColor: "rgba(255,94,0,0.8)",  // Color al pasar el mouse (opaco)
-                          },}}
-            >
-                Quitar filtro
-            </Button>
-          )}
-
-          <Button
-              onClick={() => setDateModalOpen(false)}
-              sx={{ mt: 1 }}
-          >
-              Cancelar
-          </Button>
-      </Box>
-  </Box>
-</Modal>
-
-
+      <Modal open={dateModalOpen} onClose={() => setDateModalOpen(false)}>
+        <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 350, backgroundColor: "white", p: 4, borderRadius: 3 }}>
+          <Typography variant="h6" sx={{ color: "#FA812F", mb: 3, fontWeight: 'bold' }}>Filtrar por Fecha</Typography>
+          <Stack spacing={3}>
+            <TextField type="date" label="Inicio" InputLabelProps={{ shrink: true }} value={initDate} onChange={e => setInitDate(e.target.value)} fullWidth />
+            <TextField type="date" label="Fin" InputLabelProps={{ shrink: true }} value={endDate} onChange={e => setEndDate(e.target.value)} fullWidth />
+            <Button variant="contained" fullWidth onClick={applyDateFilter} sx={{ backgroundColor: "#FA812F" }}>Aplicar</Button>
+            {isFiltered && <Button variant="outlined" fullWidth onClick={removeFilter} color="error">Quitar Filtro</Button>}
+          </Stack>
+        </Box>
+      </Modal>
     </ThemeProvider>
   );
 };
-
 export default Reports;

@@ -289,10 +289,8 @@ const ToolList = () => {
 
             {/* Contenido principal */}
             <Box sx={{
-                minHeight: "100vh",
                 backgroundColor: "#FEF3E2",
                 py: 4,
-                display: "flex",
                 alignItems: "center",
                 pt: 8
             }}>
@@ -318,8 +316,7 @@ const ToolList = () => {
                     </Typography>
 
                     {/* Botones de control */}
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-                        <Box sx={{ display: "flex", gap: 1 }}>
+                        <Box sx={{ display: "flex", gap: 3 , mb: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
                             <Button
                                 variant={viewMode === 'grouped' ? 'contained' : 'outlined'}
                                 onClick={() => setViewMode('grouped')}
@@ -348,20 +345,23 @@ const ToolList = () => {
                             >
                                 📋 Vista Individual
                             </Button>
+
+                            <Button 
+                                variant="contained" 
+                                onClick={handleGoToAddTool} 
+                                sx={{ 
+                                    backgroundColor: "rgba(255, 94, 0, 1)",
+                                    '&:hover': {
+                                        backgroundColor: "rgba(255, 94, 0, 0.8)"
+                                    },
+                                    position: 'relative'
+                                }}
+                            >
+                                ➕ Agregar Herramienta
+                            </Button>
                         </Box>
-                        <Button 
-                            variant="contained" 
-                            onClick={handleGoToAddTool} 
-                            sx={{ 
-                                backgroundColor: "rgba(255, 94, 0, 1)",
-                                '&:hover': {
-                                    backgroundColor: "rgba(255, 94, 0, 0.8)"
-                                }
-                            }}
-                        >
-                            ➕ Agregar Herramienta
-                        </Button>
-                    </Box>
+                        
+         
 
                     {/* Vista Agrupada */}
                     {viewMode === 'grouped' && (
