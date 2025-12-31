@@ -1,0 +1,58 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-deployment
+  labels:
+    app: gateway-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-deployment
+  template:
+    metadata:
+      labels:
+        app: gateway-deployment
+    spec:
+      containers:
+      - name: gateway-service
+        image: rojomax12/gateway-toolrent:latest
+        ports:
+        - containerPort: 8090
+        env:
+        - name: SERVER_PORT
+          value: "8090"
+        args:
+          - --eureka.client.service-url.defaultZone=http://eureka-service:8761/eureka/
+          - --eureka.instance.hostname=gateway-service
+          - --eureka.instance.prefer-ip-address=true
+
+          - "--spring.cloud.gateway.globalcors.cors-configurations.[/**].allowedOriginPatterns=http://127.0.0.1:*,http://localhost:*"
+          - "--spring.cloud.gateway.globalcors.cors-configurations.[/**].allowedMethods=GET,POST,PUT,DELETE,OPTIONS"
+          - "--spring.cloud.gateway.globalcors.cors-configurations.[/**].allowedHeaders=*"
+          - "--spring.cloud.gateway.globalcors.cors-configurations.[/**].allowCredentials=true"
+
+          # --- Evitar errores de cabeceras duplicadas si el microservicio también tiene CORS ---
+          - "--spring.cloud.gateway.default-filters[0]=DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST"
+          
+          # --- Config Server ---
+          - "--spring.cloud.config.uri=http://config-service:8081"
+
+          
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-service
+  labels:
+    app: gateway-service
+spec:
+  selector:
+    app: gateway-deployment
+  ports:
+    - port: 8090
+      targetPort: 8090
+  type: LoadBalancer

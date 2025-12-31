@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: m4-montytar-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: m4-montytar
+  template:
+    metadata:
+      labels:
+        app: m4-montytar
+    spec:
+      containers:
+      - name: m4-montytar
+        image: rojomax12/m4-toolrent:latest
+        # ARGS: Tienen la prioridad más alta sobre cualquier application.yml
+        args:
+          # URL lógica: Debe ser exacta a lo que dice tu Token (localhost)
+          - "--spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:9090/realms/sisgr-realm"
+          # URL física: Es por donde el POD realmente sale a buscar las llaves a tu Windows
+          - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://host.minikube.internal:9090/realms/sisgr-realm/protocol/openid-connect/certs"
+        
+        env:
+        # 1. Configuración de Infraestructura
+        - name: SPRING_CLOUD_CONFIG_URI
+          value: "http://config-service:8081"
+        - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+          value: "http://eureka-service:8761/eureka/"
+        - name: SPRING_CLOUD_NETFLIX_EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+          value: "http://eureka-service:8761/eureka/"
+        - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+          value: "true"
+
+        # 2. Base de Datos
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://host.minikube.internal:5432/GestiondemontytarMicroservices"
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-user-credentials
+              key: username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-user-credentials
+              key: password
+
+        # 3. Keycloak Client (Opcional, si usas login de servidor)
+        - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI
+          value: "http://host.minikube.internal:9090/realms/sisgr-realm"
+        - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-client-secrets
+              key: client-id
+        - name: SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-client-secrets
+              key: client-secret
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: m4-montytar-service
+spec:
+  selector:
+    app: m4-montytar
+  ports:
+    - port: 8085
+      targetPort: 8085
+
+
+

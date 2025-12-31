@@ -1,0 +1,46 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka-deployment
+  labels:
+    app: eureka-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eureka-deployment
+  template:
+    metadata:
+      labels:
+        app: eureka-deployment
+    spec:
+      containers:
+      - name: eureka-service
+        image: rojomax12/eureka-toolrent:latest
+        ports:
+        - containerPort: 8761
+        env:
+        # --- ESTO CONECTA EUREKA CON EL CONFIG SERVER ---
+        - name: SPRING_CLOUD_CONFIG_URI
+          value: "http://config-service:8081"
+        - name: EUREKA_INSTANCE_HOSTNAME
+          value: "localhost"
+        
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-service
+  labels:
+    app: eureka-service
+spec:
+  selector:
+    app: eureka-deployment
+  ports:
+    - port: 8761
+      targetPort: 8761
+      protocol: TCP
+  type: LoadBalancer

@@ -1,0 +1,92 @@
+kubectl apply -f  .\config-service.yml
+kubectl logs deployment/config-deployment
+
+kubectl delete deployment/config-deployment 
+kubectl delete service/config-service 
+
+-------------------------------------------------
+
+kubectl apply -f  .\eureka.yml
+kubectl logs deployment/eureka-deployment
+
+kubectl delete deployment/eureka-deployment
+kubectl delete service/eureka-service
+
+-------------------------------------------------
+
+kubectl apply -f .\gateway.yml
+kubectl logs deployment/gateway-deployment
+
+
+kubectl delete deployment/gateway-deployment 
+kubectl delete service/gateway-service
+
+
+-------------------------------------------------
+
+kubectl apply -f .\m1-inv.yml
+kubectl logs deployment/m1-inventario-deployment
+
+kubectl delete deployment/m1-inventario-deployment
+kubectl delete service/m1-inventario-service
+
+-------------------------------------------------
+
+kubectl apply -f .\m2-prestydev.yml
+
+kubectl delete deployment/m2-prestydev-deployment
+kubectl delete service/m2-prestydev-service
+
+-------------------------------------------------
+
+ kubectl apply -f .\m3-clientes.yml
+
+kubectl delete deployment/m3-cliente-deployment
+kubectl delete service/m3-cliente-service
+
+-------------------------------------------------
+
+ kubectl apply -f .\m4-montytar.yml
+
+kubectl delete deployment/m4-montytar-deployment
+kubectl delete service/m4-montytar-service
+
+-------------------------------------------------
+
+kubectl apply -f .\m5-karymov.yml
+
+kubectl delete deployment/m5-karymov-deployment
+kubectl delete service/m5-karymov-service
+
+-------------------------------------------------
+
+kubectl apply -f .\m6-repoycons.yml
+
+kubectl delete deployment/m6-repoycons-deployment
+kubectl delete service/m6-repoycons-service
+
+-------------------------------------------------
+kubectl apply -f keycloak-client-secret.yml
+kubectl apply -f postgres-user-secret.yml
+-------------------------------------------------
+
+kubectl apply -f  .\frontend.yml
+kubectl logs deployment/frontend-deployment
+
+kubectl delete deployment/frontend-deployment
+kubectl delete service/frontend-service
+
+
+docker buildx build --platform linux/amd64 -t rojomax12/frontend-m-toolrent:latest --push .
+docker buildx build --platform linux/amd64 -t rojomax12/m2-toolrent:latest --push .  
+
+minikube service eureka-service --url
+minikube service frontend-service --url
+minikube service gateway-service --url  
+
+minikube dashboard
+minikube start --memory 7096 --cpus 4         
+
+
+.\kc.bat start-dev --http-port 9090       
+
